@@ -28,7 +28,7 @@ const DoctorDashboard = () => {
           <div className="bg-blue-600 p-2 rounded-lg">
             <Stethoscope className="text-white w-6 h-6" />
           </div>
-          <span className="text-xl font-semibold text-gray-900 tracking-tight">DocPanel</span>
+          <span className="text-xl font-semibold text-gray-900 tracking-tight">Doctor Panel</span>
         </div>
         
         <nav className="flex-1 p-4 space-y-1">

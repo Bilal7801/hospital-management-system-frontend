@@ -4,6 +4,8 @@ import SuperAdminDashboard from './pages/SuperAdmin/SuperAdminDashboard';
 import DoctorDashboard from './pages/Doctor/DoctorDashboard'; 
 import ReceptionistDashboard from './pages/Receptionist/ReceptionistDashboard'; 
 import PatientDashboard from './pages/Patient/PatientDashboard';
+import ForgotPassword from './pages/Auth/ForgotPassword';
+import ResetPassword from './pages/Auth/ResetPassword';
 
 // Role-based Protection Component
 const ProtectedRoute = ({ children, allowedRole }) => {
@@ -27,6 +29,8 @@ function App() {
       <Routes>
         {/* Public Route */}
         <Route path="/" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         {/* Protected Routes */}
         <Route 

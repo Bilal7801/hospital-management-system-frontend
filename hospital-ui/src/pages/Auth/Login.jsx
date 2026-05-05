@@ -82,7 +82,13 @@ const Login = () => {
             <div className="space-y-2">
               <div className="flex justify-between items-center ml-1">
                 <label className="text-sm font-medium text-gray-700">Password</label>
-                <a href="#" className="text-xs text-blue-600 hover:text-blue-700 transition-colors">Forgot?</a>
+               <button
+  type="button" // Important: prevents the form from submitting when clicked
+  onClick={() => navigate('/forgot-password')}
+  className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors focus:outline-none focus:underline cursor-pointer"
+>
+  Forgot Password?
+</button>
               </div>
               <div className="relative group">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -103,7 +109,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-blue-200/50 group disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3.5 rounded-xl flex items-center justify-center gap-2 transition-all active:scale-[0.98] shadow-lg shadow-blue-200/50 group disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
             >
               {loading ? (
                 <Loader2 className="w-5 h-5 animate-spin" />

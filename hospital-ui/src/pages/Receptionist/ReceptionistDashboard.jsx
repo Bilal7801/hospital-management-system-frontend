@@ -28,7 +28,7 @@ const ReceptionistDashboard = () => {
           <div className="bg-indigo-600 p-2 rounded-xl">
             <LayoutGrid className="text-white w-6 h-6" />
           </div>
-          <span className="text-xl font-semibold text-gray-900 tracking-tight">FrontDesk</span>
+          <span className="text-xl font-semibold text-gray-900 tracking-tight">Receptionist Panel</span>
         </div>
 
         <nav className="flex-1 px-4 space-y-1 mt-4">

@@ -29,7 +29,7 @@ const SuperAdminDashboard = () => {
           <div className="bg-blue-600 p-2 rounded-lg">
             <Activity className="text-white w-6 h-6" />
           </div>
-          <span className="text-xl font-semibold text-gray-900 tracking-tight">HMS Pro</span>
+          <span className="text-xl font-semibold text-gray-900 tracking-tight">HMS Admin</span>
         </div>
 
         <nav className="flex-1 px-4 space-y-2 mt-4">
