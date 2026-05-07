@@ -17,6 +17,39 @@ import AddDepartment from "./pages/SuperAdmin/sections/Departments/AddDepartment
 import EditDepartment from "./pages/SuperAdmin/sections/Departments/EditDepartment";
 import AssignDoctors from "./pages/SuperAdmin/sections/Departments/AssignDoctors";
 
+import Receptionists from "./pages/SuperAdmin/sections/Receptionists/Receptionists";
+import AddReceptionist from "./pages/SuperAdmin/sections/Receptionists/AddReceptionist";
+import EditReceptionist from "./pages/SuperAdmin/sections/Receptionists/EditRecetionist";
+import ViewReceptionist from "./pages/SuperAdmin/sections/Receptionists/ViewReceptionist";
+
+import Patients from "./pages/SuperAdmin/sections/Patients/Patients";
+import PatientAppointments from "./pages/SuperAdmin/sections/Patients/PatientAppointments";
+import PatientHistory from "./pages/SuperAdmin/sections/Patients/PatientHistory";
+import ViewPatient from "./pages/SuperAdmin/sections/Patients/ViewPatient";
+
+import AddAppointment from "./pages/SuperAdmin/sections/Appointments/AddAppointments";
+import Appointments from "./pages/SuperAdmin/sections/Appointments/Appointments";
+import EditAppointment from "./pages/SuperAdmin/sections/Appointments/EditAppointments";
+import ViewAppointment from "./pages/SuperAdmin/sections/Appointments/ViewAppointments";
+
+
+import DoctorSchedules from "./pages/SuperAdmin/sections/ScheduleManagement/DoctorSchedules";
+import ViewSchedule from "./pages/SuperAdmin/sections/ScheduleManagement/ViewSchedule";
+import EditSchedule from "./pages/SuperAdmin/sections/ScheduleManagement/EditSchedule";
+import SetSchedule from "./pages/SuperAdmin/sections/ScheduleManagement/SetSchedule";
+import ManageLeaves from "./pages/SuperAdmin/sections/ScheduleManagement/ManageLeaves";
+import SlotPreview from "./pages/SuperAdmin/sections/ScheduleManagement/SlotPreview";
+
+import BillingAndPayment from "./pages/SuperAdmin/sections/BillingAndPayment/BillingAndPayment";
+import Payments from "./pages/SuperAdmin/sections/BillingAndPayment/Payments";
+import RevenueReports from "./pages/SuperAdmin/sections/BillingAndPayment/RevenueReports";
+import PaymentMethods from "./pages/SuperAdmin/sections/BillingAndPayment/PaymentMethods";
+import Transactions from "./pages/SuperAdmin/sections/BillingAndPayment/Transactions";
+
+import ReportsAnalytics from "./pages/SuperAdmin/sections/ReportsAndAnalysis/ReportsAnalytics";
+import NoticeAndAnnouncements from "./pages/SuperAdmin/sections/NoticeAndAnnouncements/NoticeAndAnnouncements";
+
+
 
 import Profile from "./pages/SuperAdmin/sections/Profile";
 
@@ -65,11 +98,54 @@ function App() {
           <Route path="doctors/edit/:id" element={<EditDoctor />} />
           <Route path="doctors/view/:id" element={<ViewDoctor />} />
 
+          {/* Department Pages */}
+
 <Route path="departments" element={<Departments />} />
 <Route path="departments/add" element={<AddDepartment />} />
 <Route path="departments/edit/:id" element={<EditDepartment />} />
 <Route path="departments/assign/:id" element={<AssignDoctors />} />
 
+          {/* Receptionist Pages */}
+
+          <Route path="receptionists" element={<Receptionists />} />
+<Route path="receptionists/add" element={<AddReceptionist />} />
+<Route path="receptionists/edit/:id" element={<EditReceptionist />} />
+<Route path="receptionists/view/:id" element={<ViewReceptionist />} />
+
+          {/* Patient Pages */}
+
+          <Route path="patients" element={<Patients />} />
+<Route path="patients/appointments" element={<PatientAppointments />} />
+<Route path="patients/history" element={<PatientHistory />} />
+<Route path="patients/view/:id" element={<ViewPatient />} />
+
+          {/* Appointment Pages */}
+
+          <Route path="appointments" element={<Appointments />} />
+<Route path="appointments/add" element={<AddAppointment />} />
+<Route path="appointments/edit/:id" element={<EditAppointment />} />
+<Route path="appointments/view/:id" element={<ViewAppointment />} />
+
+          {/* Schedule Management */}
+          <Route path="doctor-schedule" element={<DoctorSchedules />} />
+          <Route path="doctor-schedule/view-schedule/:id" element={<ViewSchedule />} />
+          <Route path="doctor-schedule/edit/:id" element={<EditSchedule />} />
+          <Route path="doctor-schedule/manage-leave" element={<ManageLeaves />} />
+          <Route path="doctor-schedule/set-schedule" element={<SetSchedule />} />
+          <Route path="doctor-schedule/slot-preview/:id" element={<SlotPreview />} />
+
+          {/* Billing & Payment */}
+          <Route path="billing" element={<BillingAndPayment />} />
+          <Route path="billing/payments" element={<Payments />} />
+          <Route path="billing/revenue" element={<RevenueReports />} />
+          <Route path="billing/methods" element={<PaymentMethods />} />
+          <Route path="billing/transactions" element={<Transactions />} />
+
+          {/* Reports & Analytics */}
+          <Route path="reports" element={<ReportsAnalytics />} />
+
+          {/* Notice & Announcements */}
+          <Route path="notices" element={<NoticeAndAnnouncements />} />
 
           <Route path="profile" element={<Profile />} />
         </Route>

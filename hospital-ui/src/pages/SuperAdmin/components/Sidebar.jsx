@@ -41,7 +41,7 @@ const Sidebar = () => {
     {
       icon: Users,
       label: "Reception Management",
-      path: "/dashboard/reception",
+      path: "/dashboard/receptionists",
     },
     {
       icon: Users,
@@ -52,6 +52,11 @@ const Sidebar = () => {
       icon: CalendarDays,
       label: "Appointment Management",
       path: "/dashboard/appointments",
+    },
+      {
+      icon: CalendarDays,
+      label: "Schedule Management",
+      path: "/dashboard/doctor-schedule",
     },
     {
       icon: CreditCard,

@@ -1,8 +1,6 @@
 @import "tailwindcss";
 
-/* Agar tum chahye ho ke background dark hi rahe to ye add kar lo */
 body {
-  @apply bg-slate-900;
   margin: 0;
   padding: 0;
 }
