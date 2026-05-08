@@ -11,33 +11,37 @@ const Login = () => {
   
   const navigate = useNavigate();
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError('');
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setError('');
 
-    try {
-        // Ab sirf endpoint ka naam likhna kafi hai
-        const response = await api.post('/Auth/login', {
-            email: email,
-            password: password
-        });
+  try {
+    const response = await api.post('/Auth/login', {
+      email,
+      password
+    });
 
-        const { token, role } = response.data;
-        localStorage.setItem('token', token);
-        localStorage.setItem('role', role);
+    // ✅ FIXED (match backend response)
+    const { accessToken, user } = response.data;
 
-        // Navigation logic wahi rahegi...
-        if (role === "SuperAdmin") navigate('/dashboard');
-        else if (role === "Doctor") navigate('/doctor');
-        else if (role === "Receptionist") navigate('/receptionist');
-        else if (role === "Patient") navigate('/patient');
-        
-    } catch (err) {
-        setError(err.response?.data || 'Connection Error or Invalid Credentials');
-    } finally {
-        setLoading(false);
-    }
+    // store token
+    localStorage.setItem('token', accessToken);
+    localStorage.setItem('role', user.role);
+    localStorage.setItem('user', JSON.stringify(user));
+
+    // navigation
+    if (user.role === "SuperAdmin") navigate('/dashboard');
+    else if (user.role === "Doctor") navigate('/doctor');
+    else if (user.role === "Receptionist") navigate('/receptionist');
+    else if (user.role === "Patient") navigate('/patient');
+    else navigate('/');
+
+  } catch (err) {
+    setError(err.response?.data?.message || 'Invalid Credentials');
+  } finally {
+    setLoading(false);
+  }
 };
 
   return (
