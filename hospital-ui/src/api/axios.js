@@ -10,16 +10,19 @@ const api = axios.create({
 
 // Request Interceptor: Taake har request ke saath token khud ba khud chala jaye
 api.interceptors.request.use(
-    (config) => {
-        const token = localStorage.getItem('token');
-        if (token) {
-            config.headers.Authorization = `Bearer ${token}`;
-        }
-        return config;
-    },
-    (error) => {
-        return Promise.reject(error);
+  (config) => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
     }
+
+    if (config.data instanceof FormData) {
+      delete config.headers["Content-Type"];
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error)
 );
 
 // Response Interceptor: Agar 401 (Unauthorized) aaye toh login par phenk de

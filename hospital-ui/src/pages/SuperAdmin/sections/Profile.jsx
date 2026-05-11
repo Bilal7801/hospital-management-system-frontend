@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Camera, Save } from "lucide-react";
-import api from "../../../api/axios"; // adjust path if needed
+import api from "../../../api/axios";
+
+const API_BASE = "https://localhost:7203";
 
 const Profile = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [saving, setSaving] = useState(false);
 
   const [formData, setFormData] = useState({
     userId: 0,
@@ -23,6 +26,12 @@ const Profile = () => {
   useEffect(() => {
     fetchProfile();
   }, []);
+
+  const getImageUrl = (url) => {
+    if (!url) return null;
+    if (url.startsWith("http")) return url;
+    return `${API_BASE}${url}`;
+  };
 
   const fetchProfile = async () => {
     try {
@@ -43,9 +52,9 @@ const Profile = () => {
         profileImageUrl: data.profileImageUrl || "",
       });
 
-      setImagePreview(data.profileImageUrl || null);
+      setImagePreview(getImageUrl(data.profileImageUrl));
     } catch (err) {
-      console.log("Error fetching profile:", err);
+      console.log("Error fetching profile:", err?.response?.data || err);
     }
   };
 
@@ -69,27 +78,28 @@ const Profile = () => {
     if (!selectedFile) return;
 
     const uploadFormData = new FormData();
-    uploadFormData.append("file", selectedFile);
-    uploadFormData.append("userId", formData.userId);
+    uploadFormData.append("file", selectedFile, selectedFile.name);
 
-    const res = await api.post("/superadmin/profile/upload-image", uploadFormData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    });
+    const res = await api.post("/superadmin/profile/upload-image", uploadFormData);
+
+    const fullUrl = getImageUrl(res.data.imageUrl);
 
     setFormData((prev) => ({
       ...prev,
       profileImageUrl: res.data.imageUrl,
     }));
 
+    setImagePreview(fullUrl);
     setSelectedFile(null);
+
+    return res.data.imageUrl;
   };
 
   const handleSave = async () => {
     try {
+      setSaving(true);
+
       const payload = {
-        userId: formData.userId,
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
@@ -101,23 +111,39 @@ const Profile = () => {
         address: formData.address,
       };
 
-      await api.put("/superadmin/profile", payload);
+      const res = await api.put("/superadmin/profile", payload);
+      console.log("Save response:", res.data);
 
       if (selectedFile) {
-        await uploadImage();
+        try {
+          await uploadImage();
+        } catch (imgErr) {
+          console.log("Image upload failed:", imgErr?.response?.data || imgErr);
+        }
       }
 
-      alert("Profile updated successfully");
       await fetchProfile();
+      alert("Profile updated successfully");
     } catch (err) {
-      console.log("Error saving profile:", err);
+      console.log("Error saving profile:", err?.response?.data || err);
+    } finally {
+      setSaving(false);
     }
+  };
+
+  const getInitials = (name) => {
+    if (!name) return "U";
+    return name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
   };
 
   return (
     <div className="min-h-screen bg-slate-50 p-5">
       <div className="max-w-4xl mx-auto space-y-5">
-
         <div>
           <h1 className="text-xl font-semibold text-slate-800">
             Profile Settings
@@ -135,10 +161,14 @@ const Profile = () => {
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 rounded-xl overflow-hidden bg-slate-100 border border-slate-200 flex items-center justify-center">
               {imagePreview ? (
-                <img src={imagePreview} className="w-full h-full object-cover" alt="Profile" />
+                <img
+                  src={imagePreview}
+                  className="w-full h-full object-cover"
+                  alt="Profile"
+                />
               ) : (
-                <span className="text-xl font-semibold text-slate-300">
-                  BA
+                <span className="text-xl font-semibold text-slate-400">
+                  {getInitials(formData?.name)}
                 </span>
               )}
             </div>
@@ -157,7 +187,6 @@ const Profile = () => {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-6">
-
           <div>
             <h2 className="text-sm font-medium text-slate-700 mb-3">
               Admin Information
@@ -235,13 +264,13 @@ const Profile = () => {
           <div className="pt-4 border-t border-slate-100 flex justify-end">
             <button
               onClick={handleSave}
-              className="flex items-center gap-2 px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition active:scale-95"
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition active:scale-95 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Save size={14} />
-              Save Changes
+              {saving ? "Saving..." : "Save Changes"}
             </button>
           </div>
-
         </div>
       </div>
     </div>

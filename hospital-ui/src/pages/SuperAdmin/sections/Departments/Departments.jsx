@@ -1,37 +1,47 @@
-import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, Users } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { Plus, Edit2, Trash2, Users } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import api from "../../../../api/axios"; // adjust path if needed
 
 const Departments = () => {
   const navigate = useNavigate();
+  const [departments, setDepartments] = useState([]);
 
-  const [departments] = useState([
-    {
-      id: 1,
-      name: "Cardiology",
-      doctors: ["Dr. James", "Dr. Wilson"],
-      head: "Dr. James Wilson",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Neurology",
-      doctors: ["Dr. Sarah"],
-      head: "Dr. Sarah Jenkins",
-      status: "Active",
-    },
-  ]);
+  const fetchDepartments = async () => {
+    try {
+      const response = await api.get("/Department");
+      setDepartments(response.data);
+    } catch (error) {
+      console.error("Error fetching departments:", error);
+    }
+  };
 
-  const handleDelete = (id) => {
-    console.log("Delete department:", id);
+  useEffect(() => {
+    fetchDepartments();
+  }, []);
+
+  const handleDelete = async (id) => {
+    try {
+      await api.delete(`/Department/${id}`);
+      fetchDepartments();
+    } catch (error) {
+      console.error("Delete failed:", error);
+    }
+  };
+
+  const handleToggleStatus = async (id) => {
+    try {
+      await api.patch(`/Department/toggle-status/${id}`);
+      fetchDepartments();
+    } catch (error) {
+      console.error("Status update failed:", error);
+    }
   };
 
   return (
     <div className="p-6 max-w-7xl mx-auto min-h-screen">
-
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
-
         <div>
           <h2 className="text-xl font-bold text-gray-900">
             Department Management
@@ -52,10 +62,7 @@ const Departments = () => {
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-
         <table className="w-full text-left">
-
-          {/* Head */}
           <thead className="bg-gray-50/50">
             <tr className="text-gray-400 text-[11px] uppercase tracking-wider">
               <th className="px-6 py-4 font-semibold">Department</th>
@@ -66,71 +73,78 @@ const Departments = () => {
             </tr>
           </thead>
 
-          {/* Body */}
           <tbody className="divide-y divide-gray-100">
-
             {departments.map((dept) => (
-              <tr key={dept.id} className="hover:bg-gray-50 transition-colors">
-
+              <tr
+                key={dept.departmentId}
+                className="hover:bg-gray-50 transition-colors"
+              >
                 <td className="px-6 py-4 font-semibold text-sm text-gray-900">
-                  {dept.name}
+                  {dept.departmentName}
                 </td>
 
                 <td className="px-6 py-4 text-xs text-gray-600">
-                  {dept.head}
+                  {dept.departmentHead}
                 </td>
 
                 <td className="px-6 py-4 text-center">
                   <span className="px-2.5 py-1 bg-blue-50 text-blue-600 rounded-full text-[11px] font-bold">
-                    {dept.doctors.length} Staff
+                    0 Staff
                   </span>
                 </td>
 
                 <td className="px-6 py-4 text-center">
-                  <span
-                    className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${
-                      dept.status === "Active"
+                  <button
+                    onClick={() => handleToggleStatus(dept.departmentId)}
+                    className={`px-2.5 py-1 rounded-full text-[11px] font-bold cursor-pointer ${
+                      dept.isActive
                         ? "bg-emerald-50 text-emerald-600"
                         : "bg-gray-100 text-gray-500"
                     }`}
                   >
-                    {dept.status}
-                  </span>
+                    {dept.isActive ? "Active" : "Inactive"}
+                  </button>
                 </td>
 
                 <td className="px-6 py-4 text-right">
-                  <div className="flex justify-end gap-2 cursor-pointer">
-
+                  <div className="flex justify-end gap-2">
                     <button
-                      onClick={() => navigate(`assign/${dept.id}`)}
+                      onClick={() => navigate(`assign/${dept.departmentId}`)}
                       className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md cursor-pointer"
                     >
                       <Users className="w-4 h-4" />
                     </button>
 
                     <button
-                      onClick={() => navigate(`edit/${dept.id}`)}
+                      onClick={() => navigate(`edit/${dept.departmentId}`)}
                       className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-md cursor-pointer"
                     >
                       <Edit2 className="w-4 h-4" />
                     </button>
 
                     <button
-                      onClick={() => handleDelete(dept.id)}
+                      onClick={() => handleDelete(dept.departmentId)}
                       className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-md cursor-pointer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
-
                   </div>
                 </td>
-
               </tr>
             ))}
 
+            {departments.length === 0 && (
+              <tr>
+                <td
+                  colSpan="5"
+                  className="text-center py-8 text-sm text-gray-400"
+                >
+                  No departments found
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
-
       </div>
     </div>
   );
