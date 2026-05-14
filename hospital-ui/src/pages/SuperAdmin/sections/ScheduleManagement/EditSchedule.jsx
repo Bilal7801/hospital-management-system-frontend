@@ -1,25 +1,71 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Save, Clock, Building2, User } from 'lucide-react';
+import { ArrowLeft, Save, Clock, User } from 'lucide-react';
+import api from "../../../../api/axios";
 
 const EditSchedule = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Mock data (later replace with API by id)
+  const [loading, setLoading] = useState(true);
+
   const [formData, setFormData] = useState({
-    doctor: "Dr. James Wilson",
-    department: "Cardiology",
-    days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-    startTime: "09:00",
-    endTime: "15:00",
-    breakStart: "13:00",
-    breakEnd: "13:30",
-    slotDuration: "15",
-    status: "Active",
+    doctorId: 0,
+    doctor: '',
+    department: '',
+    days: [],
+    startTime: '',
+    endTime: '',
+    breakStart: '',
+    breakEnd: '',
+    slotDuration: 15,
+    status: 'Active',
   });
 
-  const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+  const daysList = [
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday',
+    'Sunday',
+  ];
+
+  const formatTimeForInput = (timeString) => {
+    if (!timeString) return '';
+    return String(timeString).slice(0, 5);
+  };
+
+  const fetchSchedule = async () => {
+    try {
+      const response = await api.get(`/DoctorSchedule/${id}`);
+      const data = response.data;
+
+      setFormData({
+        doctorId: data.doctorId || 0,
+        doctor: data.doctorName || '',
+        department: data.departmentName || '',
+        days: data.workingDays
+          ? String(data.workingDays).split(',').map((d) => d.trim())
+          : [],
+        startTime: formatTimeForInput(data.startTime),
+        endTime: formatTimeForInput(data.endTime),
+        breakStart: formatTimeForInput(data.breakStart),
+        breakEnd: formatTimeForInput(data.breakEnd),
+        slotDuration: data.slotDuration || 15,
+        status: data.isActive ? 'Active' : 'Inactive',
+      });
+    } catch (error) {
+      console.error('Failed to fetch schedule:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchSchedule();
+  }, [id]);
 
   const handleDayToggle = (day) => {
     setFormData((prev) => ({
@@ -34,19 +80,43 @@ const EditSchedule = () => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: value,
+      [name]: name === 'slotDuration' ? Number(value) : value,
     }));
   };
 
-  const handleSave = () => {
-    console.log("Schedule updated:", formData);
-    navigate('/dashboard/doctor-schedule');
+  const handleSave = async () => {
+    try {
+      const payload = {
+        doctorId: formData.doctorId,
+        days: formData.days,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
+        breakStart: formData.breakStart,
+        breakEnd: formData.breakEnd,
+        slotDuration: Number(formData.slotDuration),
+        isActive: formData.status === 'Active',
+      };
+
+      await api.put(`/DoctorSchedule/${id}`, payload);
+
+      alert('Schedule updated successfully');
+      navigate('/dashboard/doctor-schedule');
+    } catch (error) {
+      console.error('Update failed:', error);
+      alert('Failed to update schedule');
+    }
   };
+
+  if (loading) {
+    return (
+      <div className="p-10 text-center text-gray-400">
+        Loading schedule...
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-3xl mx-auto min-h-screen">
-
-      {/* Back Button */}
       <button
         onClick={() => navigate('/dashboard/doctor-schedule')}
         className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer"
@@ -55,57 +125,44 @@ const EditSchedule = () => {
         Back
       </button>
 
-      {/* Card */}
       <div className="mt-6 bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-
-        {/* Title */}
         <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
           <User className="w-5 h-5 text-blue-600" />
           Edit Schedule #{id}
         </h2>
 
-        {/* Doctor Name */}
         <div className="mb-4">
           <label className="text-[11px] font-semibold text-gray-500 uppercase">
             Doctor Name
           </label>
           <input
-            type="text"
-            name="doctor"
             value={formData.doctor}
-            onChange={handleInputChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+            disabled
+            className="w-full mt-1 p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm"
           />
         </div>
 
-        {/* Department */}
         <div className="mb-4">
           <label className="text-[11px] font-semibold text-gray-500 uppercase">
             Department
           </label>
-          <select
-            name="department"
+          <input
             value={formData.department}
-            onChange={handleInputChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
-          >
-            <option>Cardiology</option>
-            <option>Neurology</option>
-            <option>Orthopedics</option>
-            <option>Pediatrics</option>
-            <option>General Surgery</option>
-          </select>
+            disabled
+            className="w-full mt-1 p-3 border border-gray-200 rounded-xl bg-gray-50 text-sm"
+          />
         </div>
 
-        {/* Working Days */}
         <div className="mb-6">
           <label className="text-[11px] font-semibold text-gray-500 uppercase mb-3 block">
             Working Days
           </label>
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-            {days.map((day) => (
+            {daysList.map((day) => (
               <button
                 key={day}
+                type="button"
                 onClick={() => handleDayToggle(day)}
                 className={`py-2 px-3 rounded-lg text-sm font-semibold transition-all ${
                   formData.days.includes(day)
@@ -119,10 +176,7 @@ const EditSchedule = () => {
           </div>
         </div>
 
-        {/* Time Details Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-
-          {/* Start Time */}
           <div>
             <label className="text-[11px] font-semibold text-gray-500 uppercase">
               <Clock className="w-4 h-4 inline mr-1" />
@@ -133,11 +187,10 @@ const EditSchedule = () => {
               name="startTime"
               value={formData.startTime}
               onChange={handleInputChange}
-              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl"
             />
           </div>
 
-          {/* End Time */}
           <div>
             <label className="text-[11px] font-semibold text-gray-500 uppercase">
               End Time
@@ -147,44 +200,40 @@ const EditSchedule = () => {
               name="endTime"
               value={formData.endTime}
               onChange={handleInputChange}
-              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl"
             />
           </div>
 
-          {/* Break Start */}
           <div>
             <label className="text-[11px] font-semibold text-gray-500 uppercase">
-              Break Start Time
+              Break Start
             </label>
             <input
               type="time"
               name="breakStart"
               value={formData.breakStart}
               onChange={handleInputChange}
-              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl"
             />
           </div>
 
-          {/* Break End */}
           <div>
             <label className="text-[11px] font-semibold text-gray-500 uppercase">
-              Break End Time
+              Break End
             </label>
             <input
               type="time"
               name="breakEnd"
               value={formData.breakEnd}
               onChange={handleInputChange}
-              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl"
             />
           </div>
-
         </div>
 
-        {/* Slot Duration */}
         <div className="mb-6">
           <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Appointment Slot Duration (minutes)
+            Slot Duration
           </label>
           <input
             type="number"
@@ -193,52 +242,53 @@ const EditSchedule = () => {
             onChange={handleInputChange}
             min="5"
             step="5"
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100 cursor-pointer"
+            className="w-full mt-1 p-3 border border-gray-200 rounded-xl"
           />
         </div>
 
-        {/* Status */}
         <div className="mb-6">
           <label className="text-[11px] font-semibold text-gray-500 uppercase">
             Status
           </label>
 
           <div className="flex gap-3 mt-2">
-
             <button
-              onClick={() => setFormData((prev) => ({ ...prev, status: "Active" }))}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border-2 transition-all cursor-pointer ${
-                formData.status === "Active"
-                  ? "bg-emerald-50 border-emerald-600 text-emerald-600"
-                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
+              type="button"
+              onClick={() =>
+                setFormData((prev) => ({ ...prev, status: 'Active' }))
+              }
+              className={`flex-1 py-2.5 rounded-xl border-2 ${
+                formData.status === 'Active'
+                  ? 'bg-emerald-50 border-emerald-600 text-emerald-600'
+                  : 'border-gray-200'
               }`}
             >
               Active
             </button>
 
             <button
-              onClick={() => setFormData((prev) => ({ ...prev, status: "Inactive" }))}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border-2 transition-all cursor-pointer ${
-                formData.status === "Inactive"
-                  ? "bg-gray-100 border-gray-600 text-gray-600"
-                  : "border-gray-200 text-gray-600 hover:bg-gray-50"
+              type="button"
+              onClick={() =>
+                setFormData((prev) => ({ ...prev, status: 'Inactive' }))
+              }
+              className={`flex-1 py-2.5 rounded-xl border-2 ${
+                formData.status === 'Inactive'
+                  ? 'bg-gray-100 border-gray-600 text-gray-600'
+                  : 'border-gray-200'
               }`}
             >
               Inactive
             </button>
-
           </div>
         </div>
 
-        {/* Save Button */}
         <button
           onClick={handleSave}
-          className="w-full bg-blue-600 text-white py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold hover:bg-blue-700 transition-all cursor-pointer"
+          className="w-full bg-blue-600 text-white py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold hover:bg-blue-700"
         >
           <Save className="w-4 h-4" />
           Save Changes
         </button>
-
       </div>
     </div>
   );

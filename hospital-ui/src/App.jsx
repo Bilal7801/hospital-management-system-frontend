@@ -39,6 +39,7 @@ import EditSchedule from "./pages/SuperAdmin/sections/ScheduleManagement/EditSch
 import SetSchedule from "./pages/SuperAdmin/sections/ScheduleManagement/SetSchedule";
 import ManageLeaves from "./pages/SuperAdmin/sections/ScheduleManagement/ManageLeaves";
 import SlotPreview from "./pages/SuperAdmin/sections/ScheduleManagement/SlotPreview";
+import AddLeave from "./pages/SuperAdmin/sections/ScheduleManagement/AddLeave";
 
 import BillingAndPayment from "./pages/SuperAdmin/sections/BillingAndPayment/BillingAndPayment";
 import Payments from "./pages/SuperAdmin/sections/BillingAndPayment/Payments";
@@ -133,6 +134,7 @@ function App() {
           <Route path="doctor-schedule/manage-leave" element={<ManageLeaves />} />
           <Route path="doctor-schedule/set-schedule" element={<SetSchedule />} />
           <Route path="doctor-schedule/slot-preview/:id" element={<SlotPreview />} />
+          <Route path="doctor-schedule/add-leave" element={<AddLeave />} />
 
           {/* Billing & Payment */}
           <Route path="billing" element={<BillingAndPayment />} />

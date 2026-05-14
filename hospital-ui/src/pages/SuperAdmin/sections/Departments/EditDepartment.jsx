@@ -6,36 +6,49 @@ import api from "../../../../api/axios";
 const EditDepartment = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+
   const [loading, setLoading] = useState(false);
+  const [doctors, setDoctors] = useState([]);
 
   const [formData, setFormData] = useState({
     departmentName: "",
-    departmentHead: "",
+    headDoctorId: "",
     isActive: true,
   });
 
   // ======================
-  // GET BY ID + Normalize Data
+  // GET DEPARTMENT BY ID
   // ======================
   const fetchDepartment = async () => {
     try {
       const res = await api.get(`/Department/${id}`);
-      
       const data = res.data;
-      
-      // 🔥 IMPORTANT: Normalize isActive to boolean
+
       setFormData({
         departmentName: data.departmentName || "",
-        departmentHead: data.departmentHead || "",
-        isActive: Boolean(data.isActive),   // Converts 1/0/"1"/"0" → true/false
+        headDoctorId: data.headDoctorId || "",
+        isActive: Boolean(data.isActive),
       });
     } catch (error) {
       console.error("Error fetching department:", error);
     }
   };
 
+  // ======================
+  // GET DOCTORS FOR DROPDOWN
+  // ======================
+  const fetchDoctors = async () => {
+    try {
+      const res = await api.get("/Doctor");
+      setDoctors(res.data);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+    }
+  };
+
   useEffect(() => {
     fetchDepartment();
+    fetchDoctors();
   }, [id]);
 
   // ======================
@@ -49,17 +62,17 @@ const EditDepartment = () => {
   };
 
   // ======================
-  // TOGGLE STATUS
+  // STATUS TOGGLE
   // ======================
   const toggleStatus = (status) => {
     setFormData((prev) => ({
       ...prev,
-      isActive: status,   // always boolean
+      isActive: status,
     }));
   };
 
   // ======================
-  // SAVE (PUT)
+  // UPDATE
   // ======================
   const handleUpdate = async () => {
     try {
@@ -67,8 +80,10 @@ const EditDepartment = () => {
 
       await api.put(`/Department/${id}`, {
         departmentName: formData.departmentName,
-        departmentHead: formData.departmentHead,
-        isActive: formData.isActive,        // Send boolean (or you can send 1/0 if you prefer)
+        headDoctorId: formData.headDoctorId
+          ? parseInt(formData.headDoctorId)
+          : null,
+        isActive: formData.isActive,
       });
 
       alert("Department updated successfully");
@@ -83,6 +98,8 @@ const EditDepartment = () => {
 
   return (
     <div className="p-6 max-w-2xl mx-auto min-h-screen">
+
+      {/* Back */}
       <button
         onClick={() => navigate("/dashboard/departments")}
         className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer mb-6"
@@ -92,42 +109,60 @@ const EditDepartment = () => {
       </button>
 
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+
         <h2 className="text-lg font-bold text-gray-900 mb-6">
           Edit Department #{id}
         </h2>
 
         {/* Department Name */}
         <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">Department Name</label>
+          <label className="text-[11px] font-semibold text-gray-500 uppercase">
+            Department Name
+          </label>
           <input
             name="departmentName"
             value={formData.departmentName}
             onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
+            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm"
           />
         </div>
 
-        {/* Department Head */}
+        {/* Head Doctor Dropdown */}
         <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">Department Head</label>
-          <input
-            name="departmentHead"
-            value={formData.departmentHead}
+          <label className="text-[11px] font-semibold text-gray-500 uppercase">
+            Head Doctor
+          </label>
+
+          <select
+            name="headDoctorId"
+            value={formData.headDoctorId}
             onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-          />
+            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm"
+          >
+            <option value="">Select Head Doctor</option>
+
+            {doctors.map((doc) => (
+              <option key={doc.doctorId} value={doc.doctorId}>
+                {doc.doctorName}
+              </option>
+            ))}
+          </select>
         </div>
 
-        {/* Status Toggle */}
+        {/* Status */}
         <div className="mb-6">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">Status</label>
+          <label className="text-[11px] font-semibold text-gray-500 uppercase">
+            Status
+          </label>
+
           <div className="flex gap-3 mt-2">
+
             <button
               onClick={() => toggleStatus(true)}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border transition-all ${
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border ${
                 formData.isActive
                   ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                  : "bg-white hover:bg-gray-50 border-gray-200"
+                  : "border-gray-200"
               }`}
             >
               Active
@@ -135,14 +170,15 @@ const EditDepartment = () => {
 
             <button
               onClick={() => toggleStatus(false)}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border transition-all ${
+              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border ${
                 !formData.isActive
                   ? "bg-gray-100 text-gray-600 border-gray-300"
-                  : "bg-white hover:bg-gray-50 border-gray-200"
+                  : "border-gray-200"
               }`}
             >
               Inactive
             </button>
+
           </div>
         </div>
 
@@ -155,6 +191,7 @@ const EditDepartment = () => {
           <Save className="w-4 h-4" />
           {loading ? "Saving..." : "Save Changes"}
         </button>
+
       </div>
     </div>
   );

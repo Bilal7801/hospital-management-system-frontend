@@ -1,96 +1,252 @@
-import React from 'react';
-import {
-  ArrowLeft,
-  Save,
-} from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ArrowLeft, Save, CalendarDays, Clock } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
+import api from '../../../../api/axios';
 
 const EditAppointment = () => {
   const navigate = useNavigate();
   const { id } = useParams();
 
+  const [patients, setPatients] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
+  const [loadingAppointment, setLoadingAppointment] = useState(true);
+
+  const [formData, setFormData] = useState({
+    patientId: '',
+    doctorId: '',
+    departmentId: '',
+    appointmentDate: '',
+    appointmentTime: '',
+    status: 'Upcoming',
+    notes: ''
+  });
+
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+
+  // Fetch Patients, Doctors + Current Appointment
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoadingData(true);
+
+        const [patientsRes, doctorsRes, appointmentRes] = await Promise.all([
+          api.get('/superadmin/patients'),
+          api.get('/superadmin/doctors'),
+          api.get(`/superadmin/appointments/${id}`)
+        ]);
+
+        setPatients(Array.isArray(patientsRes.data) ? patientsRes.data : []);
+        setDoctors(Array.isArray(doctorsRes.data) ? doctorsRes.data : []);
+
+        const app = appointmentRes.data;
+
+        // Pre-fill form
+        const date = new Date(app.appointmentDate);
+        setFormData({
+          patientId: app.patientId?.toString() || '',
+          doctorId: app.doctorId?.toString() || '',
+          departmentId: app.departmentId?.toString() || '',
+          appointmentDate: date.toISOString().split('T')[0],
+          appointmentTime: date.toTimeString().slice(0, 5),
+          status: app.status || 'Upcoming',
+          notes: app.notes || ''
+        });
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load appointment data');
+      } finally {
+        setLoadingData(false);
+        setLoadingAppointment(false);
+      }
+    };
+
+    fetchData();
+  }, [id]);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSaving(true);
+    setError('');
+
+    try {
+      const appointmentDateTime = `${formData.appointmentDate}T${formData.appointmentTime}`;
+
+      const payload = {
+        patientId: parseInt(formData.patientId),
+        doctorId: parseInt(formData.doctorId),
+        departmentId: formData.departmentId ? parseInt(formData.departmentId) : null,
+        appointmentDate: appointmentDateTime,
+        status: formData.status,
+        notes: formData.notes
+      };
+
+      await api.put(`/superadmin/appointments/${id}`, payload);
+
+      alert('Appointment updated successfully!');
+      navigate('/dashboard/appointments');
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.title || 'Failed to update appointment');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loadingAppointment || loadingData) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto min-h-screen">
+        <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8 text-center text-gray-500">
+          Loading appointment data...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-3xl mx-auto min-h-screen">
-
-      {/* Back */}
+      {/* Back Button */}
       <button
         onClick={() => navigate('/dashboard/appointments')}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer"
+        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer mb-6"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back
+        Back to Appointments
       </button>
 
-      {/* Card */}
-      <div className="mt-6 bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
         <h2 className="text-lg font-bold text-gray-900 mb-6">
           Edit Appointment #{id}
         </h2>
 
-        <div className="space-y-5">
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm">
+            {error}
+          </div>
+        )}
 
+        <form onSubmit={handleSubmit} className="space-y-5">
           {/* Patient */}
           <div>
-            <label className="text-[11px] uppercase text-gray-500 font-semibold">
-              Patient
+            <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-1">
+              Select Patient
             </label>
-
-            <select className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm cursor-pointer">
-              <option>Ahmed Raza</option>
-              <option>Sara Khan</option>
+            <select
+              name="patientId"
+              value={formData.patientId}
+              onChange={handleChange}
+              required
+              className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none cursor-pointer"
+            >
+              <option value="">-- Select Patient --</option>
+              {patients.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.fullName}
+                </option>
+              ))}
             </select>
           </div>
 
           {/* Doctor */}
           <div>
-            <label className="text-[11px] uppercase text-gray-500 font-semibold">
-              Doctor
+            <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-1">
+              Select Doctor
             </label>
-
-            <select className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm cursor-pointer">
-              <option>Dr. James Wilson</option>
-              <option>Dr. Sarah Jenkins</option>
+            <select
+              name="doctorId"
+              value={formData.doctorId}
+              onChange={handleChange}
+              required
+              className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none cursor-pointer"
+            >
+              <option value="">-- Select Doctor --</option>
+              {doctors.map(d => (
+                <option key={d.doctorId} value={d.doctorId}>
+                  {d.doctorName} - {d.specialization}
+                </option>
+              ))}
             </select>
           </div>
 
           {/* Date & Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-1">
+                Appointment Date
+              </label>
+              <input
+                type="date"
+                name="appointmentDate"
+                value={formData.appointmentDate}
+                onChange={handleChange}
+                required
+                className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none cursor-pointer"
+              />
+            </div>
 
-            <input
-              type="date"
-              className="p-3 border border-gray-200 rounded-xl text-sm"
-            />
-
-            <input
-              type="time"
-              className="p-3 border border-gray-200 rounded-xl text-sm"
-            />
-
+            <div>
+              <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-1">
+                Appointment Time
+              </label>
+              <input
+                type="time"
+                name="appointmentTime"
+                value={formData.appointmentTime}
+                onChange={handleChange}
+                required
+                className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none cursor-pointer"
+              />
+            </div>
           </div>
 
           {/* Status */}
           <div>
-            <label className="text-[11px] uppercase text-gray-500 font-semibold">
+            <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-1">
               Status
             </label>
-
-            <select className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm cursor-pointer">
-              <option>Upcoming</option>
-              <option>Completed</option>
-              <option>Cancelled</option>
+            <select
+              name="status"
+              value={formData.status}
+              onChange={handleChange}
+              className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none cursor-pointer"
+            >
+              <option value="Upcoming">Upcoming</option>
+              <option value="Completed">Completed</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
           </div>
 
-          {/* Save */}
-          <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold cursor-pointer">
+          {/* Notes */}
+          <div>
+            <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-1">
+              Notes / Reason
+            </label>
+            <textarea
+              name="notes"
+              value={formData.notes}
+              onChange={handleChange}
+              rows={4}
+              placeholder="Additional notes (optional)"
+              className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none resize-y"
+            />
+          </div>
 
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={saving}
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 transition-all text-white py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+          >
             <Save className="w-4 h-4" />
-            Save Changes
-
+            {saving ? 'Updating Appointment...' : 'Save Changes'}
           </button>
-
-        </div>
+        </form>
       </div>
     </div>
   );

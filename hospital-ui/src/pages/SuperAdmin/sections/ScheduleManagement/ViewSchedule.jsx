@@ -1,24 +1,70 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Edit2, Calendar, Clock, User, Building2, PauseCircle } from 'lucide-react';
+import {
+  ArrowLeft,
+  Edit2,
+  Calendar,
+  Clock,
+  User,
+  Building2,
+  PauseCircle,
+} from 'lucide-react';
+import api from '../../../../api/axios';
 
 const ViewSchedule = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // Mock data (later replace with API by id)
-  const schedule = {
-    id,
-    doctor: "Dr. James Wilson",
-    department: "Cardiology",
-    days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"],
-    startTime: "09:00 AM",
-    endTime: "03:00 PM",
-    breakStart: "01:00 PM",
-    breakEnd: "01:30 PM",
-    slotDuration: "15 min",
-    status: "Active",
+  const [schedule, setSchedule] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const formatTime = (t) => (t ? String(t).slice(0, 5) : '--');
+
+  const fetchSchedule = async () => {
+    try {
+      const res = await api.get(`/DoctorSchedule/${id}`);
+      const data = res.data;
+
+      setSchedule({
+        id: data.scheduleId,
+        doctor: data.doctorName,
+        department: data.departmentName,
+        days: data.workingDays
+          ? String(data.workingDays).split(',').map((d) => d.trim())
+          : [],
+        startTime: formatTime(data.startTime),
+        endTime: formatTime(data.endTime),
+        breakStart: formatTime(data.breakStart),
+        breakEnd: formatTime(data.breakEnd),
+        slotDuration: `${data.slotDuration} min`,
+        status: data.isActive ? 'Active' : 'Inactive',
+      });
+    } catch (err) {
+      console.error('Failed to load schedule:', err);
+    } finally {
+      setLoading(false);
+    }
   };
+
+  useEffect(() => {
+    fetchSchedule();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <div className="p-10 text-center text-gray-400">
+        Loading schedule...
+      </div>
+    );
+  }
+
+  if (!schedule) {
+    return (
+      <div className="p-10 text-center text-red-400">
+        Schedule not found
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-5xl mx-auto min-h-screen">
@@ -32,13 +78,12 @@ const ViewSchedule = () => {
         Back to Schedules
       </button>
 
-      {/* Header Card */}
+      {/* Header */}
       <div className="mt-6 bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
 
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
 
           <div>
-
             <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
               <User className="w-4 h-4 text-blue-600" />
               {schedule.doctor}
@@ -48,13 +93,14 @@ const ViewSchedule = () => {
               <Building2 className="w-4 h-4" />
               {schedule.department}
             </p>
-
           </div>
 
           <div className="flex gap-2">
 
             <button
-              onClick={() => navigate(`/dashboard/doctor-schedule/edit/${id}`)}
+              onClick={() =>
+                navigate(`/dashboard/doctor-schedule/edit/${id}`)
+              }
               className="flex items-center gap-2 px-4 py-2 bg-amber-50 text-amber-600 rounded-xl text-sm font-semibold hover:bg-amber-100 cursor-pointer"
             >
               <Edit2 className="w-4 h-4" />
@@ -62,7 +108,9 @@ const ViewSchedule = () => {
             </button>
 
             <button
-              onClick={() => navigate(`/dashboard/doctor-schedule/slot-preview/${id}`)}
+              onClick={() =>
+                navigate(`/dashboard/doctor-schedule/slot-preview/${id}`)
+              }
               className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 cursor-pointer"
             >
               <Calendar className="w-4 h-4" />
@@ -70,17 +118,14 @@ const ViewSchedule = () => {
             </button>
 
           </div>
-
         </div>
-
       </div>
 
-      {/* Details Grid */}
+      {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
 
-        {/* Working Days */}
+        {/* Days */}
         <div className="bg-white border border-gray-200 rounded-2xl p-5">
-
           <h3 className="text-xs uppercase text-gray-400 font-semibold mb-3">
             Working Days
           </h3>
@@ -95,12 +140,10 @@ const ViewSchedule = () => {
               </span>
             ))}
           </div>
-
         </div>
 
         {/* Status */}
         <div className="bg-white border border-gray-200 rounded-2xl p-5">
-
           <h3 className="text-xs uppercase text-gray-400 font-semibold mb-3">
             Status
           </h3>
@@ -114,16 +157,13 @@ const ViewSchedule = () => {
           >
             {schedule.status}
           </span>
-
         </div>
-
       </div>
 
-      {/* Time Details */}
+      {/* Time */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
 
         <div className="bg-white border border-gray-200 rounded-2xl p-5">
-
           <p className="text-[11px] uppercase text-gray-400 font-semibold">
             Working Time
           </p>
@@ -132,11 +172,9 @@ const ViewSchedule = () => {
             <Clock className="w-4 h-4 text-gray-400" />
             {schedule.startTime} - {schedule.endTime}
           </p>
-
         </div>
 
         <div className="bg-white border border-gray-200 rounded-2xl p-5">
-
           <p className="text-[11px] uppercase text-gray-400 font-semibold">
             Break Time
           </p>
@@ -145,11 +183,9 @@ const ViewSchedule = () => {
             <PauseCircle className="w-4 h-4 text-gray-400" />
             {schedule.breakStart} - {schedule.breakEnd}
           </p>
-
         </div>
 
         <div className="bg-white border border-gray-200 rounded-2xl p-5">
-
           <p className="text-[11px] uppercase text-gray-400 font-semibold">
             Slot Duration
           </p>
@@ -157,7 +193,6 @@ const ViewSchedule = () => {
           <p className="text-sm font-bold text-gray-900 mt-2">
             {schedule.slotDuration}
           </p>
-
         </div>
 
       </div>
