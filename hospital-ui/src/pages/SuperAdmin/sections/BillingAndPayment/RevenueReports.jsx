@@ -1,38 +1,95 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Download, TrendingUp, Calendar, Filter } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, Download, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../../../api/axios'; // Using your existing axios instance
 
 const RevenueReports = () => {
   const navigate = useNavigate();
-  const [selectedMonth, setSelectedMonth] = useState('May');
-  const [selectedYear, setSelectedYear] = useState('2025');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  
+  // States to hold backend data
+  const [reportStats, setReportStats] = useState(null);
+  const [allPayments, setAllPayments] = useState([]);
 
-  const monthlyData = [
-    { month: 'January', revenue: 45000, transactions: 320, avg: 140 },
-    { month: 'February', revenue: 52000, transactions: 380, avg: 137 },
-    { month: 'March', revenue: 48000, transactions: 350, avg: 137 },
-    { month: 'April', revenue: 61000, transactions: 420, avg: 145 },
-    { month: 'May', revenue: 58500, transactions: 410, avg: 142 },
-  ];
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      // Fetch both the summary report and the detailed payment list
+      const [reportRes, paymentsRes] = await Promise.all([
+        api.get('/superadmin/billing/revenue-report'),
+        api.get('/superadmin/billing/payments')
+      ]);
 
-  const departmentRevenue = [
-    { name: 'Cardiology', revenue: '$28,500', percentage: 28, trend: '+5.2%' },
-    { name: 'Neurology', revenue: '$22,800', percentage: 22, trend: '+3.1%' },
-    { name: 'Orthopedics', revenue: '$18,900', percentage: 19, trend: '-1.2%' },
-    { name: 'Pediatrics', revenue: '$15,600', percentage: 15, trend: '+2.5%' },
-    { name: 'General Surgery', revenue: '$14,700', percentage: 16, trend: '+4.3%' },
-  ];
+      setReportStats(reportRes.data);
+      setAllPayments(paymentsRes.data);
+    } catch (err) {
+      setError('Failed to sync with financial records.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const doctorRevenue = [
-    { name: 'Dr. James Wilson', revenue: '$12,500', transactions: 85, avg: 147 },
-    { name: 'Dr. Sarah Jenkins', revenue: '$11,200', transactions: 78, avg: 144 },
-    { name: 'Dr. Robert Fox', revenue: '$9,800', transactions: 65, avg: 151 },
-    { name: 'Dr. Emily Brown', revenue: '$8,500', transactions: 58, avg: 147 },
-    { name: 'Dr. Michael Davis', revenue: '$7,600', transactions: 52, avg: 146 },
-  ];
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const totalRevenue = monthlyData.reduce((sum, m) => sum + m.revenue, 0);
-  const totalTransactions = monthlyData.reduce((sum, m) => sum + m.transactions, 0);
+  // --- DYNAMIC DATA MAPPING (Keeping your exact structure) ---
+
+  // 1. Calculate Department Revenue
+  const departmentRevenue = useMemo(() => {
+    const depts = {};
+    allPayments.forEach(p => {
+      const name = p.departmentName || 'General';
+      if (!depts[name]) depts[name] = { name, revenue: 0, count: 0 };
+      depts[name].revenue += p.amount;
+      depts[name].count += 1;
+    });
+
+    const total = Object.values(depts).reduce((sum, d) => sum + d.revenue, 0);
+
+    return Object.values(depts)
+      .map(d => ({
+        name: d.name,
+        revenue: `$${d.revenue.toLocaleString()}`,
+        percentage: total > 0 ? Math.round((d.revenue / total) * 100) : 0,
+        trend: '+0.0%' // Backend doesn't provide historical trend yet
+      }))
+      .sort((a, b) => parseFloat(b.revenue.replace('$', '')) - parseFloat(a.revenue.replace('$', '')));
+  }, [allPayments]);
+
+  // 2. Calculate Top Doctors
+  const doctorRevenue = useMemo(() => {
+    const docs = {};
+    allPayments.forEach(p => {
+      const name = p.doctorName || 'Staff';
+      if (!docs[name]) docs[name] = { name, revenue: 0, transactions: 0 };
+      docs[name].revenue += p.amount;
+      docs[name].transactions += 1;
+    });
+
+    return Object.values(docs)
+      .map(d => ({
+        name: d.name,
+        revenue: `$${d.revenue.toLocaleString()}`,
+        transactions: d.transactions,
+        avg: d.transactions > 0 ? Math.round(d.revenue / d.transactions) : 0
+      }))
+      .sort((a, b) => parseFloat(b.revenue.replace('$', '')) - parseFloat(a.revenue.replace('$', '')))
+      .slice(0, 5);
+  }, [allPayments]);
+
+  // 3. Stats calculation
+  const totalRevenue = reportStats?.totalRevenue || 0;
+  const totalTransactions = reportStats?.totalPayments || 0;
+  const avgTransaction = totalTransactions > 0 ? (totalRevenue / totalTransactions).toFixed(0) : 0;
+
+  if (loading) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+    </div>
+  );
 
   return (
     <div className="p-6 max-w-7xl mx-auto min-h-screen">
@@ -58,13 +115,19 @@ const RevenueReports = () => {
         </div>
 
         <button
-          onClick={() => {}}
+          onClick={() => window.print()} // Quick print functionality
           className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all cursor-pointer"
         >
           <Download className="w-4 h-4" />
           Download Report
         </button>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl flex items-center gap-2 text-sm">
+          <AlertCircle className="w-4 h-4" /> {error}
+        </div>
+      )}
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -76,7 +139,7 @@ const RevenueReports = () => {
             ${(totalRevenue / 1000).toFixed(1)}K
           </p>
           <p className="text-xs text-green-600 mt-2 font-semibold">
-            ↑ 8.5% from last period
+            Real-time balance
           </p>
         </div>
 
@@ -88,7 +151,7 @@ const RevenueReports = () => {
             {totalTransactions}
           </p>
           <p className="text-xs text-green-600 mt-2 font-semibold">
-            ↑ 5.2% from last period
+            Completed: {reportStats?.completedPayments}
           </p>
         </div>
 
@@ -97,45 +160,43 @@ const RevenueReports = () => {
             Average Transaction
           </p>
           <p className="text-3xl font-bold text-gray-900 mt-2">
-            ${(totalRevenue / totalTransactions).toFixed(0)}
+            ${avgTransaction}
           </p>
           <p className="text-xs text-green-600 mt-2 font-semibold">
-            ↑ 3.1% from last period
+            Per paid invoice
           </p>
         </div>
       </div>
 
-      {/* Monthly Revenue Chart */}
+      {/* Monthly Revenue Chart - Using dynamic monthlyRevenue from backend */}
       <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 mb-6">
         <h3 className="text-lg font-bold text-gray-900 mb-4">
-          Monthly Revenue Trend
+          Current Month Revenue
         </h3>
 
         <div className="space-y-4">
-          {monthlyData.map((data, idx) => (
-            <div key={idx} className="flex items-center justify-between">
+            <div className="flex items-center justify-between">
               <div className="flex items-center justify-between w-full gap-4">
                 <span className="text-sm font-semibold text-gray-700 min-w-24">
-                  {data.month}
+                  This Month
                 </span>
                 <div className="flex-1 bg-gray-100 rounded-full h-8 relative overflow-hidden">
                   <div
                     className="bg-gradient-to-r from-blue-500 to-blue-600 h-full rounded-full flex items-center justify-end pr-3 transition-all"
                     style={{
-                      width: `${(data.revenue / 65000) * 100}%`,
+                      width: `100%`, // Highlighted bar for current month
                     }}
                   >
                     <span className="text-[11px] font-bold text-white">
-                      ${(data.revenue / 1000).toFixed(1)}K
+                      ${(reportStats?.monthlyRevenue / 1000).toFixed(1)}K
                     </span>
                   </div>
                 </div>
                 <span className="text-sm font-semibold text-gray-900 min-w-20 text-right">
-                  {data.transactions} txn
+                   Live Data
                 </span>
               </div>
             </div>
-          ))}
         </div>
       </div>
 

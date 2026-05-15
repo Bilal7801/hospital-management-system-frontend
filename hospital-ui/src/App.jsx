@@ -46,6 +46,7 @@ import Payments from "./pages/SuperAdmin/sections/BillingAndPayment/Payments";
 import RevenueReports from "./pages/SuperAdmin/sections/BillingAndPayment/RevenueReports";
 import PaymentMethods from "./pages/SuperAdmin/sections/BillingAndPayment/PaymentMethods";
 import Transactions from "./pages/SuperAdmin/sections/BillingAndPayment/Transactions";
+import ViewPayment from "./pages/SuperAdmin/sections/BillingAndPayment/ViewPayment";
 
 import ReportsAnalytics from "./pages/SuperAdmin/sections/ReportsAndAnalysis/ReportsAnalytics";
 import NoticeAndAnnouncements from "./pages/SuperAdmin/sections/NoticeAndAnnouncements/NoticeAndAnnouncements";
@@ -139,10 +140,10 @@ function App() {
           {/* Billing & Payment */}
           <Route path="billing" element={<BillingAndPayment />} />
           <Route path="billing/payments" element={<Payments />} />
+          <Route path="billing/payments/:id" element={<ViewPayment />} />
           <Route path="billing/revenue" element={<RevenueReports />} />
           <Route path="billing/methods" element={<PaymentMethods />} />
           <Route path="billing/transactions" element={<Transactions />} />
-
           {/* Reports & Analytics */}
           <Route path="reports" element={<ReportsAnalytics />} />
 

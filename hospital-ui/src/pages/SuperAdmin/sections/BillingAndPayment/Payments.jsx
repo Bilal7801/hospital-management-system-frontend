@@ -1,75 +1,65 @@
-import React, { useEffect, useState } from 'react';
-import { ArrowLeft, Download, Filter, Eye, CheckCircle, Clock } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import {
+  ArrowLeft,
+  Download,
+  Filter,
+  Eye,
+  CheckCircle,
+  Clock,
+  Loader2,
+  AlertCircle,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../../../api/axios';
 
 const Payments = () => {
   const navigate = useNavigate();
   const [filterStatus, setFilterStatus] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
+  const [payments, setPayments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
   const pageSize = 4;
 
-  const payments = [
-    {
-      id: 1,
-      patient: "John Doe",
-      doctor: "Dr. James Wilson",
-      department: "Cardiology",
-      amount: "$150",
-      date: "2025-05-07",
-      method: "Credit Card",
-      status: "Completed",
-    },
-    {
-      id: 2,
-      patient: "Jane Smith",
-      doctor: "Dr. Sarah Jenkins",
-      department: "Neurology",
-      amount: "$200",
-      date: "2025-05-06",
-      method: "Debit Card",
-      status: "Completed",
-    },
-    {
-      id: 3,
-      patient: "Robert Johnson",
-      doctor: "Dr. Robert Fox",
-      department: "Orthopedics",
-      amount: "$75",
-      date: "2025-05-05",
-      method: "Online Transfer",
-      status: "Pending",
-    },
-    {
-      id: 4,
-      patient: "Emily Brown",
-      doctor: "Dr. James Wilson",
-      department: "Cardiology",
-      amount: "$300",
-      date: "2025-05-04",
-      method: "Cash",
-      status: "Completed",
-    },
-    {
-      id: 5,
-      patient: "Michael Davis",
-      doctor: "Dr. Sarah Jenkins",
-      department: "Neurology",
-      amount: "$250",
-      date: "2025-05-03",
-      method: "Credit Card",
-      status: "Completed",
-    },
-    {
-      id: 6,
-      patient: "Sarah Wilson",
-      doctor: "Dr. Robert Fox",
-      department: "Orthopedics",
-      amount: "$180",
-      date: "2025-05-02",
-      method: "Online Transfer",
-      status: "Pending",
-    },
-  ];
+  const fetchPayments = async () => {
+    try {
+      setLoading(true);
+      setError('');
+
+      const res = await api.get('/superadmin/billing/payments');
+
+      const mappedPayments = Array.isArray(res.data)
+        ? res.data.map((p) => ({
+            id: p.id,
+            patient: p.patientName || '-',
+            doctor: p.doctorName || '-',
+            department: p.departmentName || '-',
+            amount:
+              typeof p.amount === 'number'
+                ? `$${p.amount.toFixed(2)}`
+                : p.amount || '$0',
+            date: p.paymentDate || '-',
+            method: p.paymentMethod || '-',
+            status: p.status || 'Pending',
+          }))
+        : [];
+
+      setPayments(mappedPayments);
+    } catch (err) {
+      setError(
+        err?.response?.data?.message ||
+          err?.response?.data ||
+          'Failed to load payments.'
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPayments();
+  }, []);
 
   const filteredPayments =
     filterStatus === 'All'
@@ -88,21 +78,40 @@ const Payments = () => {
 
   const stats = [
     {
-      label: "Total Payments",
+      label: 'Total Payments',
       value: payments.length,
-      color: "text-blue-600",
+      color: 'text-blue-600',
     },
     {
-      label: "Completed",
+      label: 'Completed',
       value: payments.filter((p) => p.status === 'Completed').length,
-      color: "text-green-600",
+      color: 'text-green-600',
     },
     {
-      label: "Pending",
+      label: 'Pending',
       value: payments.filter((p) => p.status === 'Pending').length,
-      color: "text-orange-600",
+      color: 'text-orange-600',
     },
   ];
+
+  const handleExport = async () => {
+    try {
+      const res = await api.get('/superadmin/billing/download-report', {
+        responseType: 'blob',
+      });
+
+      const url = window.URL.createObjectURL(new Blob([res.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'payments-report');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto min-h-screen">
@@ -128,13 +137,20 @@ const Payments = () => {
         </div>
 
         <button
-          onClick={() => {}}
+          onClick={handleExport}
           className="flex items-center gap-2 px-5 py-3 bg-blue-600 text-white rounded-xl text-sm font-semibold hover:bg-blue-700 transition-all cursor-pointer"
         >
           <Download className="w-4 h-4" />
           Export
         </button>
       </div>
+
+      {error ? (
+        <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4" />
+          {error}
+        </div>
+      ) : null}
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
@@ -196,53 +212,70 @@ const Payments = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {displayedPayments.map((payment) => (
-                <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 text-sm font-semibold text-gray-900">
-                    {payment.patient}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {payment.doctor}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {payment.department}
-                  </td>
-                  <td className="px-6 py-4 text-sm font-bold text-gray-900">
-                    {payment.amount}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {payment.method}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {payment.date}
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <span
-                      className={`px-3 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1 ${
-                        payment.status === 'Completed'
-                          ? 'bg-emerald-50 text-emerald-600'
-                          : 'bg-orange-50 text-orange-600'
-                      }`}
-                    >
-                      {payment.status === 'Completed' ? (
-                        <CheckCircle className="w-3 h-3" />
-                      ) : (
-                        <Clock className="w-3 h-3" />
-                      )}
-                      {payment.status}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right">
-                    <button
-                      onClick={() => {}}
-                      className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-all cursor-pointer"
-                      title="View"
-                    >
-                      <Eye className="w-4 h-4" />
-                    </button>
+              {loading ? (
+                <tr>
+                  <td colSpan="8" className="px-6 py-10 text-center text-sm text-gray-500">
+                    <div className="inline-flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Loading payments...
+                    </div>
                   </td>
                 </tr>
-              ))}
+              ) : displayedPayments.length > 0 ? (
+                displayedPayments.map((payment) => (
+                  <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-6 py-4 text-sm font-semibold text-gray-900">
+                      {payment.patient}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {payment.doctor}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {payment.department}
+                    </td>
+                    <td className="px-6 py-4 text-sm font-bold text-gray-900">
+                      {payment.amount}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {payment.method}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {payment.date}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span
+                        className={`px-3 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1 ${
+                          payment.status === 'Completed'
+                            ? 'bg-emerald-50 text-emerald-600'
+                            : 'bg-orange-50 text-orange-600'
+                        }`}
+                      >
+                        {payment.status === 'Completed' ? (
+                          <CheckCircle className="w-3 h-3" />
+                        ) : (
+                          <Clock className="w-3 h-3" />
+                        )}
+                        {payment.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <button
+                        onClick={() => navigate(`/dashboard/billing/payments/${payment.id}`, { state: payment })}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-md transition-all cursor-pointer"
+                        title="View"
+                      >
+                        <Eye className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="8" className="px-6 py-10 text-center text-sm text-gray-500">
+                    No payments found.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>

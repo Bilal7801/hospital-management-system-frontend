@@ -1,74 +1,71 @@
-import React, { useState } from 'react';
-import { ArrowLeft, Plus, Edit2, Trash2, CreditCard, Smartphone, Building2, Eye, EyeOff } from 'lucide-react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { ArrowLeft, Plus, Edit2, Trash2, CreditCard, Smartphone, Building2, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import api from '../../../../api/axios';
 
 const PaymentMethods = () => {
   const navigate = useNavigate();
-  const [paymentMethods, setPaymentMethods] = useState([
-    {
-      id: 1,
-      type: 'Credit Card',
-      name: 'Visa',
-      provider: 'Visa Inc.',
-      lastDigits: '4242',
-      expiryDate: '12/2026',
-      isActive: true,
-      percentage: 45,
-      totalTransactions: 185,
-    },
-    {
-      id: 2,
-      type: 'Debit Card',
-      name: 'MasterCard',
-      provider: 'MasterCard',
-      lastDigits: '5555',
-      expiryDate: '08/2025',
-      isActive: true,
-      percentage: 30,
-      totalTransactions: 123,
-    },
-    {
-      id: 3,
-      type: 'Online Transfer',
-      name: 'Bank Transfer',
-      provider: 'Direct Bank',
-      lastDigits: 'N/A',
-      expiryDate: 'N/A',
-      isActive: true,
-      percentage: 20,
-      totalTransactions: 82,
-    },
-    {
-      id: 4,
-      type: 'Cash',
-      name: 'Direct Cash',
-      provider: 'Manual',
-      lastDigits: 'N/A',
-      expiryDate: 'N/A',
-      isActive: true,
-      percentage: 5,
-      totalTransactions: 20,
-    },
-  ]);
-
+  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
     type: 'Credit Card',
-    name: '',
+    methodName: '', 
     provider: '',
     lastDigits: '',
     expiryDate: '',
+    transactionFee: 0 
   });
+
+  // 1. Fetch Methods from Backend
+  const fetchMethods = async () => {
+    try {
+      setLoading(true);
+      // baseURL handles '/api', so we just need the rest of the path
+      const response = await api.get('/superadmin/billing/payment-methods');
+      
+      const mappedData = response.data.map(item => ({
+        id: item.id,
+        type: item.type || 'Credit Card', 
+        name: item.methodName || 'Unknown', 
+        provider: item.provider || 'N/A',
+        lastDigits: item.lastDigits || 'N/A',
+        expiryDate: item.expiryDate || 'N/A',
+        isActive: item.isActive,
+        transactionFee: item.transactionFee || 0,
+        totalTransactions: item.totalTransactions || 0, 
+      }));
+      
+      setPaymentMethods(mappedData);
+    } catch (err) {
+      setError('Failed to load payment methods.');
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMethods();
+  }, []);
+
+  // Calculate Total Transactions dynamically
+  const totalTransactions = useMemo(() => 
+    paymentMethods.reduce((sum, m) => sum + (m.totalTransactions || 0), 0)
+  , [paymentMethods]);
 
   const handleAddNew = () => {
     setEditingId(null);
     setFormData({
       type: 'Credit Card',
-      name: '',
+      methodName: '',
       provider: '',
       lastDigits: '',
       expiryDate: '',
+      transactionFee: 0
     });
     setShowModal(true);
   };
@@ -77,40 +74,75 @@ const PaymentMethods = () => {
     setEditingId(method.id);
     setFormData({
       type: method.type,
-      name: method.name,
+      methodName: method.name,
       provider: method.provider,
       lastDigits: method.lastDigits,
       expiryDate: method.expiryDate,
+      transactionFee: method.transactionFee
     });
     setShowModal(true);
   };
 
-  const handleSave = () => {
-    if (editingId) {
-      setPaymentMethods(
-        paymentMethods.map((m) =>
-          m.id === editingId ? { ...m, ...formData } : m
-        )
-      );
-    } else {
-      setPaymentMethods([
-        ...paymentMethods,
-        { ...formData, id: Date.now(), isActive: true, percentage: 0, totalTransactions: 0 },
-      ]);
+  // 2. Save (POST/PUT) to Backend
+  const handleSave = async () => {
+    try {
+      const payload = {
+        methodName: formData.methodName,
+        type: formData.type,
+        provider: formData.provider,
+        lastDigits: formData.lastDigits,
+        expiryDate: formData.expiryDate,
+        transactionFee: formData.transactionFee,
+        isActive: true
+      };
+
+      if (editingId) {
+        await api.put(`/superadmin/billing/payment-methods/${editingId}`, payload);
+      } else {
+        await api.post('/superadmin/billing/payment-methods', payload);
+      }
+      
+      fetchMethods(); // Refresh list after save
+      setShowModal(false);
+    } catch (err) {
+      console.error(err);
+      alert("Error saving payment method. Please ensure POST/PUT endpoints exist on the backend.");
     }
-    setShowModal(false);
   };
 
-  const handleDelete = (id) => {
-    setPaymentMethods(paymentMethods.filter((m) => m.id !== id));
+  // 3. Delete from Backend
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this payment method?")) {
+      try {
+        await api.delete(`/superadmin/billing/payment-methods/${id}`);
+        setPaymentMethods(paymentMethods.filter((m) => m.id !== id));
+      } catch (err) {
+        console.error(err);
+        alert("Error deleting method. Please ensure DELETE endpoint exists on the backend.");
+      }
+    }
   };
 
-  const toggleActive = (id) => {
-    setPaymentMethods(
-      paymentMethods.map((m) =>
-        m.id === id ? { ...m, isActive: !m.isActive } : m
-      )
-    );
+  // 4. Toggle Active Status
+  const toggleActive = async (id, currentStatus) => {
+    try {
+      // Temporarily update UI for immediate feedback
+      setPaymentMethods(paymentMethods.map(m => 
+        m.id === id ? { ...m, isActive: !currentStatus } : m
+      ));
+      
+      // Send update to the server
+      await api.patch(`/superadmin/billing/payment-methods/${id}/status`, {
+        isActive: !currentStatus
+      });
+    } catch (err) {
+      console.error(err);
+      // Revert UI if API fails
+      setPaymentMethods(paymentMethods.map(m => 
+        m.id === id ? { ...m, isActive: currentStatus } : m
+      ));
+      alert("Error updating status.");
+    }
   };
 
   const getIcon = (type) => {
@@ -127,7 +159,13 @@ const PaymentMethods = () => {
     }
   };
 
-  const totalTransactions = paymentMethods.reduce((sum, m) => sum + m.totalTransactions, 0);
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 max-w-7xl mx-auto min-h-screen">
@@ -161,6 +199,12 @@ const PaymentMethods = () => {
         </button>
       </div>
 
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-600 rounded-xl flex items-center gap-2 text-sm">
+          <AlertCircle className="w-4 h-4" /> {error}
+        </div>
+      )}
+
       {/* Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-5">
@@ -193,108 +237,115 @@ const PaymentMethods = () => {
 
       {/* Payment Methods Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        {paymentMethods.map((method) => (
-          <div
-            key={method.id}
-            className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 hover:shadow-lg transition-shadow"
-          >
-            <div className="flex items-start justify-between mb-4">
-              <div className="flex items-start gap-3">
-                <div className="bg-gray-50 p-3 rounded-xl">
-                  {getIcon(method.type)}
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    {method.name}
-                  </h3>
-                  <p className="text-xs text-gray-400 uppercase tracking-wider">
-                    {method.type}
-                  </p>
-                </div>
-              </div>
+        {paymentMethods.map((method) => {
+          // Dynamically calculate usage percentage
+          const usagePercent = totalTransactions > 0 
+            ? Math.round(((method.totalTransactions || 0) / totalTransactions) * 100) 
+            : 0;
 
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleEdit(method)}
-                  className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-all cursor-pointer"
-                  title="Edit"
-                >
-                  <Edit2 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => handleDelete(method.id)}
-                  className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
-                  title="Delete"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Details */}
-            <div className="space-y-2 mb-4">
-              <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-500">Provider:</span>
-                <span className="text-sm font-semibold text-gray-900">
-                  {method.provider}
-                </span>
-              </div>
-
-              {method.lastDigits !== 'N/A' && (
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Card Number:</span>
-                  <span className="text-sm font-semibold text-gray-900">
-                    •••• {method.lastDigits}
-                  </span>
-                </div>
-              )}
-
-              {method.expiryDate !== 'N/A' && (
-                <div className="flex justify-between items-center">
-                  <span className="text-xs text-gray-500">Expiry:</span>
-                  <span className="text-sm font-semibold text-gray-900">
-                    {method.expiryDate}
-                  </span>
-                </div>
-              )}
-            </div>
-
-            {/* Stats */}
-            <div className="bg-gray-50 rounded-lg p-3 mb-4">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-semibold text-gray-600">
-                  Usage: {method.percentage}%
-                </span>
-                <span className="text-xs font-semibold text-gray-600">
-                  {method.totalTransactions} txn
-                </span>
-              </div>
-              <div className="w-full bg-gray-200 rounded-full h-2">
-                <div
-                  className="bg-blue-600 h-2 rounded-full"
-                  style={{ width: `${method.percentage}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Status */}
-            <button
-              onClick={() => toggleActive(method.id)}
-              className={`w-full py-2 px-3 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
-                method.isActive
-                  ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
+          return (
+            <div
+              key={method.id}
+              className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6 hover:shadow-lg transition-shadow"
             >
-              {method.isActive ? '✓ Active' : 'Inactive'}
-            </button>
-          </div>
-        ))}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-gray-50 p-3 rounded-xl">
+                    {getIcon(method.type)}
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">
+                      {method.name}
+                    </h3>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider">
+                      {method.type}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => handleEdit(method)}
+                    className="p-2 text-amber-600 hover:bg-amber-50 rounded-lg transition-all cursor-pointer"
+                    title="Edit"
+                  >
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(method.id)}
+                    className="p-2 text-rose-600 hover:bg-rose-50 rounded-lg transition-all cursor-pointer"
+                    title="Delete"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Details */}
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-xs text-gray-500">Provider:</span>
+                  <span className="text-sm font-semibold text-gray-900">
+                    {method.provider}
+                  </span>
+                </div>
+
+                {method.lastDigits && method.lastDigits !== 'N/A' && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-500">Card Number:</span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      •••• {method.lastDigits}
+                    </span>
+                  </div>
+                )}
+
+                {method.expiryDate && method.expiryDate !== 'N/A' && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-gray-500">Expiry:</span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {method.expiryDate}
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              {/* Stats */}
+              <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold text-gray-600">
+                    Usage: {usagePercent}%
+                  </span>
+                  <span className="text-xs font-semibold text-gray-600">
+                    {method.totalTransactions || 0} txn
+                  </span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2">
+                  <div
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                    style={{ width: `${usagePercent}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Status */}
+              <button
+                onClick={() => toggleActive(method.id, method.isActive)}
+                className={`w-full py-2 px-3 rounded-lg text-sm font-semibold transition-all cursor-pointer ${
+                  method.isActive
+                    ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {method.isActive ? '✓ Active' : 'Inactive'}
+              </button>
+            </div>
+          );
+        })}
       </div>
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-white/20 backdrop-blur-xl flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
             <h3 className="text-lg font-bold text-gray-900 mb-4">
               {editingId ? 'Edit Payment Method' : 'Add Payment Method'}
@@ -321,13 +372,13 @@ const PaymentMethods = () => {
 
               <div>
                 <label className="text-sm font-semibold text-gray-700 mb-1 block">
-                  Name
+                  Method Name
                 </label>
                 <input
                   type="text"
-                  value={formData.name}
+                  value={formData.methodName}
                   onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
+                    setFormData({ ...formData, methodName: e.target.value })
                   }
                   className="w-full p-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                   placeholder="e.g., Visa"
