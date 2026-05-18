@@ -28,7 +28,7 @@ const AssignDoctors = () => {
   // =========================
   const fetchDoctors = async () => {
     try {
-      const res = await api.get("/Doctor");
+      const res = await api.get("/superadmin/doctors");
       setDoctors(res.data);
     } catch (err) {
       console.error(err);
@@ -70,7 +70,7 @@ const AssignDoctors = () => {
   // =========================
   const removeDoctor = async (doctor) => {
     try {
-      await api.put(`/Doctor/${doctor.doctorId}`, {
+      await api.put(`/superadmin/doctors/${doctor.doctorId}`, {
         doctorName: doctor.doctorName,
         specialization: doctor.specialization,
         qualification: doctor.qualification,

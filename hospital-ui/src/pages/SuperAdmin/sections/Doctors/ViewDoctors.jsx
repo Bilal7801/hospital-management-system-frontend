@@ -8,27 +8,57 @@ const ViewDoctor = () => {
   const navigate = useNavigate();
 
   const [doctor, setDoctor] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // ======================
-  // FETCH DOCTOR
+  // FETCH DOCTOR BY ID
   // ======================
   const fetchDoctor = async () => {
     try {
-      const res = await api.get(`/Doctor/${id}`);
+      setLoading(true);
+      setError(null);
+      
+      const res = await api.get(`/superadmin/doctors/${id}`);   // ← Fixed Route
+      console.log("Doctor Details:", res.data);
       setDoctor(res.data);
     } catch (error) {
       console.error("Error fetching doctor:", error);
+      setError("Failed to load doctor details. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchDoctor();
+    if (id) {
+      fetchDoctor();
+    }
   }, [id]);
 
-  if (!doctor) {
+  // Loading State
+  if (loading) {
     return (
-      <div className="p-6 text-center text-gray-500">
-        Loading doctor...
+      <div className="p-6 text-center text-gray-500 min-h-screen">
+        Loading doctor details...
+      </div>
+    );
+  }
+
+  // Error State
+  if (error || !doctor) {
+    return (
+      <div className="p-6 max-w-3xl mx-auto min-h-screen">
+        <button
+          onClick={() => navigate("/dashboard/doctors")}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 mb-6 cursor-pointer"
+        >
+          <ArrowLeft className="w-4 h-4" />
+          Back to Doctors
+        </button>
+        <div className="bg-red-50 border border-red-200 text-red-600 p-6 rounded-2xl text-center">
+          {error || "Doctor not found"}
+        </div>
       </div>
     );
   }
@@ -36,96 +66,67 @@ const ViewDoctor = () => {
   return (
     <div className="p-6 max-w-3xl mx-auto min-h-screen">
 
-      {/* Back */}
+      {/* Back Button */}
       <button
         onClick={() => navigate("/dashboard/doctors")}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer"
+        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer mb-6"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back
+        Back to Doctors
       </button>
 
-      {/* Card */}
-      <div className="mt-6 bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+      {/* Doctor Card */}
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
 
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <User className="w-6 h-6 text-blue-600" />
-          <h2 className="text-lg font-bold text-gray-900">
-            Doctor Profile #{doctor.doctorId}
-          </h2>
+        <div className="flex items-center gap-4 mb-8">
+          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+            <User className="w-6 h-6 text-blue-600" />
+          </div>
+          <div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              {doctor.doctorName}
+            </h2>
+            <p className="text-gray-500">Doctor ID: #{doctor.doctorId}</p>
+          </div>
         </div>
 
-        {/* Info */}
-        <div className="space-y-5 text-sm">
+        {/* Information Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
 
-          {/* Name */}
           <div>
-            <p className="text-[11px] text-gray-400 uppercase">
-              Doctor Name
-            </p>
-            <p className="font-semibold text-gray-800">
-              {doctor.doctorName}
-            </p>
+            <p className="text-[11px] text-gray-400 uppercase tracking-widest">Specialization</p>
+            <p className="font-semibold text-gray-800 mt-1">{doctor.specialization || "N/A"}</p>
           </div>
 
-          {/* Specialization */}
           <div>
-            <p className="text-[11px] text-gray-400 uppercase">
-              Specialization
-            </p>
-            <p className="font-semibold text-gray-800">
-              {doctor.specialization}
-            </p>
+            <p className="text-[11px] text-gray-400 uppercase tracking-widest">Qualification</p>
+            <p className="font-semibold text-gray-800 mt-1">{doctor.qualification || "N/A"}</p>
           </div>
 
-          {/* Qualification */}
           <div>
-            <p className="text-[11px] text-gray-400 uppercase">
-              Qualification
-            </p>
-            <p className="font-semibold text-gray-800">
-              {doctor.qualification}
-            </p>
-          </div>
-
-          {/* Department */}
-          <div>
-            <p className="text-[11px] text-gray-400 uppercase">
-              Department
-            </p>
-            <p className="font-semibold text-gray-800">
+            <p className="text-[11px] text-gray-400 uppercase tracking-widest">Department</p>
+            <p className="font-semibold text-gray-800 mt-1">
               {doctor.departmentName || "Not Assigned"}
             </p>
           </div>
 
-          {/* Fee */}
           <div>
-            <p className="text-[11px] text-gray-400 uppercase">
-              Consultation Fee
-            </p>
-            <p className="font-semibold text-gray-800">
-              Rs. {doctor.consultationFee}
+            <p className="text-[11px] text-gray-400 uppercase tracking-widest">Consultation Fee</p>
+            <p className="font-semibold text-gray-800 mt-1">
+              Rs. {doctor.consultationFee || 0}
             </p>
           </div>
 
-          {/* Timing */}
           <div>
-            <p className="text-[11px] text-gray-400 uppercase">
-              Timing
-            </p>
-            <p className="font-semibold text-gray-800">
-              {doctor.timing}
-            </p>
+            <p className="text-[11px] text-gray-400 uppercase tracking-widest">Timing</p>
+            <p className="font-semibold text-gray-800 mt-1">{doctor.timing || "N/A"}</p>
           </div>
 
-          {/* Status */}
           <div>
-            <p className="text-[11px] text-gray-400 uppercase">
-              Status
-            </p>
+            <p className="text-[11px] text-gray-400 uppercase tracking-widest">Status</p>
             <span
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-full ${
+              className={`inline-block px-3 py-1 text-[11px] font-bold rounded-full mt-1 ${
                 doctor.isActive
                   ? "bg-emerald-50 text-emerald-600"
                   : "bg-gray-100 text-gray-500"

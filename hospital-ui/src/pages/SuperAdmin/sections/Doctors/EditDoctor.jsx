@@ -25,7 +25,7 @@ const EditDoctor = () => {
   // ======================
   const fetchDoctor = async () => {
     try {
-      const res = await api.get(`/Doctor/${id}`);
+      const res = await api.get(`/superadmin/doctors/${id}`);
 
       setFormData({
         doctorName: res.data.doctorName || "",
@@ -85,7 +85,7 @@ const EditDoctor = () => {
     try {
       setLoading(true);
 
-      await api.put(`/Doctor/${id}`, {
+      await api.put(`/superadmin/doctors/${id}`, {
         doctorName: formData.doctorName,
         specialization: formData.specialization,
         qualification: formData.qualification,

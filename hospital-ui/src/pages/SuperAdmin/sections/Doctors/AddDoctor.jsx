@@ -62,7 +62,7 @@ const AddDoctor = () => {
     try {
       setLoading(true);
 
-      await api.post("/Doctor", {
+      await api.post("/superadmin/doctors", {
         doctorName: formData.doctorName,
         specialization: formData.specialization,
         qualification: formData.qualification,

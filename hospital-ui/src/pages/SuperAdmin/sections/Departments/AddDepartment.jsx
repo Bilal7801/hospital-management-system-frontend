@@ -18,7 +18,7 @@ const AddDepartment = () => {
   const fetchDoctors = async () => {
     try {
       setDoctorLoading(true);
-      const res = await api.get("/Doctor");
+      const res = await api.get("/superadmin/doctors");
       setDoctors(res.data);
     } catch (error) {
       console.error("Error fetching doctors:", error);

@@ -6,17 +6,22 @@ import api from "../../../../api/axios";
 const Doctors = () => {
   const navigate = useNavigate();
   const [doctors, setDoctors] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   // ======================
   // FETCH DOCTORS
   // ======================
   const fetchDoctors = async () => {
     try {
-      const res = await api.get("/Doctor");
-      console.log("Doctors API:", res.data);
+      setLoading(true);
+      const res = await api.get("/superadmin/doctors");   // ← Fixed Route
+      console.log("Doctors API Response:", res.data);
       setDoctors(res.data);
     } catch (error) {
       console.error("Error fetching doctors:", error);
+      // Optional: You can show toast notification here
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -25,14 +30,17 @@ const Doctors = () => {
   }, []);
 
   // ======================
-  // DELETE
+  // DELETE DOCTOR
   // ======================
   const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this doctor?")) return;
+
     try {
-      await api.delete(`/Doctor/${id}`);
+      await api.delete(`/superadmin/doctors/${id}`);   // ← Fixed Route
       fetchDoctors();
     } catch (error) {
       console.error("Delete failed:", error);
+      alert("Failed to delete doctor");
     }
   };
 
@@ -41,10 +49,13 @@ const Doctors = () => {
   // ======================
   const handleToggleStatus = async (id) => {
     try {
-      await api.patch(`/Doctor/toggle-status/${id}`);
+      // Note: You don't have this endpoint in your current DoctorController
+      // Either add it in backend or remove this feature for now
+      await api.patch(`/superadmin/doctors/toggle-status/${id}`);
       fetchDoctors();
     } catch (error) {
       console.error("Status update failed:", error);
+      alert("Failed to update status. Please implement toggle endpoint.");
     }
   };
 
@@ -90,7 +101,6 @@ const Doctors = () => {
                 <td className="px-6 py-4 text-sm font-semibold text-gray-900">
                   <div className="flex items-center gap-2">
                     <User className="w-4 h-4 text-gray-400" />
-
                     <span>{doc.doctorName}</span>
 
                     {doc.isHeadOfDepartment ? (
@@ -107,7 +117,7 @@ const Doctors = () => {
 
                 {/* Specialty */}
                 <td className="px-6 py-4 text-sm text-gray-600">
-                  {doc.specialization}
+                  {doc.specialization || "N/A"}
                 </td>
 
                 {/* Department */}
@@ -157,13 +167,22 @@ const Doctors = () => {
               </tr>
             ))}
 
-            {doctors.length === 0 && (
+            {/* Loading & Empty States */}
+            {doctors.length === 0 && !loading && (
               <tr>
                 <td
                   colSpan="5"
-                  className="text-center py-8 text-sm text-gray-400"
+                  className="text-center py-12 text-sm text-gray-400"
                 >
                   No doctors found
+                </td>
+              </tr>
+            )}
+
+            {loading && (
+              <tr>
+                <td colSpan="5" className="text-center py-12">
+                  <div className="text-gray-500">Loading doctors...</div>
                 </td>
               </tr>
             )}
