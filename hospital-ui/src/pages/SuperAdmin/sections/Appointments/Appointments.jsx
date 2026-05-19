@@ -24,23 +24,38 @@ const Appointments = () => {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    const fetchAppointments = async () => {
-      try {
-        setLoading(true);
-        setError('');
-
-        const res = await api.get('/superadmin/appointments');
-        setAppointments(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load appointments.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchAppointments();
   }, []);
+
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const res = await api.get('/superadmin/appointments');
+      setAppointments(Array.isArray(res.data) ? res.data : []);
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load appointments.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ====================== DELETE APPOINTMENT ======================
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this appointment?")) {
+      return;
+    }
+
+    try {
+      await api.delete(`/superadmin/appointments/${id}`);
+      alert("Appointment deleted successfully");
+      fetchAppointments(); // Refresh list
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete appointment");
+    }
+  };
 
   const getDoctorName = (doctor) => {
     if (!doctor) return 'Not Assigned';
@@ -85,13 +100,11 @@ const Appointments = () => {
   }, [rows, searchTerm, statusFilter]);
 
   const totalPages = Math.max(1, Math.ceil(filteredAppointments.length / itemsPerPage));
-
   const paginatedAppointments = filteredAppointments.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  // Reset to page 1 when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [searchTerm, statusFilter]);
@@ -210,7 +223,10 @@ const Appointments = () => {
                         >
                           <Edit2 className="w-4 h-4" />
                         </button>
-                        <button className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-md cursor-pointer">
+                        <button 
+                          onClick={() => handleDelete(app.id)}
+                          className="p-1.5 text-rose-600 hover:bg-rose-50 rounded-md cursor-pointer"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>

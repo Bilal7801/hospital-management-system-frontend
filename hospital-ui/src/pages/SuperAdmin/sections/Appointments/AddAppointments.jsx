@@ -23,13 +23,13 @@ const AddAppointment = () => {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  // Fetch Patients and Doctors for dropdowns
+  // Fetch Patients and Doctors
   useEffect(() => {
     const fetchDropdownData = async () => {
       try {
         const [patientsRes, doctorsRes] = await Promise.all([
           api.get('/superadmin/patients'),
-          api.get('/superadmin/doctors')        // Make sure this endpoint exists
+          api.get('/superadmin/doctors')
         ]);
 
         setPatients(Array.isArray(patientsRes.data) ? patientsRes.data : []);
@@ -44,6 +44,19 @@ const AddAppointment = () => {
 
     fetchDropdownData();
   }, []);
+
+  // Auto-fill DepartmentId when Doctor is selected (Hidden)
+  useEffect(() => {
+    if (formData.doctorId) {
+      const selectedDoctor = doctors.find(d => d.doctorId === parseInt(formData.doctorId));
+      if (selectedDoctor?.departmentId) {
+        setFormData(prev => ({
+          ...prev,
+          departmentId: selectedDoctor.departmentId.toString()
+        }));
+      }
+    }
+  }, [formData.doctorId, doctors]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -73,7 +86,7 @@ const AddAppointment = () => {
       navigate('/dashboard/appointments');
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.title || 'Failed to create appointment');
+      setError(err.response?.data?.message || 'Failed to create appointment');
     } finally {
       setSaving(false);
     }
@@ -89,20 +102,20 @@ const AddAppointment = () => {
         Back to Appointments
       </button>
 
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
-        <h2 className="text-lg font-bold text-gray-900 mb-6">Create New Appointment</h2>
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-8">
+        <h2 className="text-2xl font-bold text-gray-900 mb-8">Create New Appointment</h2>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm">
+          <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl text-sm">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-6">
           {/* Patient */}
           <div>
-            <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-1">
-              Select Patient
+            <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-2">
+              Select Patient *
             </label>
             <select
               name="patientId"
@@ -122,8 +135,8 @@ const AddAppointment = () => {
 
           {/* Doctor */}
           <div>
-            <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-1">
-              Select Doctor
+            <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-2">
+              Select Doctor *
             </label>
             <select
               name="doctorId"
@@ -141,11 +154,14 @@ const AddAppointment = () => {
             </select>
           </div>
 
+          {/* Hidden Department Field */}
+          <input type="hidden" name="departmentId" value={formData.departmentId} />
+
           {/* Date & Time */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-1">
-                Appointment Date
+              <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-2">
+                Appointment Date *
               </label>
               <input
                 type="date"
@@ -158,8 +174,8 @@ const AddAppointment = () => {
             </div>
 
             <div>
-              <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-1">
-                Appointment Time
+              <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-2">
+                Appointment Time *
               </label>
               <input
                 type="time"
@@ -174,7 +190,7 @@ const AddAppointment = () => {
 
           {/* Status */}
           <div>
-            <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-1">
+            <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-2">
               Status
             </label>
             <select
@@ -189,18 +205,18 @@ const AddAppointment = () => {
             </select>
           </div>
 
-          {/* Notes */}
+          {/* Notes / Reason - Big Field */}
           <div>
-            <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-1">
+            <label className="text-[11px] uppercase font-semibold text-gray-500 block mb-2">
               Notes / Reason
             </label>
             <textarea
               name="notes"
               value={formData.notes}
               onChange={handleChange}
-              rows={4}
-              placeholder="Additional notes (optional)"
-              className="w-full p-3 border border-gray-200 rounded-xl text-sm outline-none resize-y"
+              rows={6}                    // ← Bigger size
+              placeholder="Enter reason, special instructions, or additional notes..."
+              className="w-full p-4 border border-gray-200 rounded-xl text-sm outline-none resize-y min-h-[140px]"
             />
           </div>
 
@@ -208,9 +224,9 @@ const AddAppointment = () => {
           <button
             type="submit"
             disabled={saving}
-            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 transition-all text-white py-3.5 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
+            className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-blue-400 transition-all text-white py-4 rounded-xl text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer mt-4"
           >
-            <Save className="w-4 h-4" />
+            <Save className="w-5 h-5" />
             {saving ? 'Creating Appointment...' : 'Create Appointment'}
           </button>
         </form>

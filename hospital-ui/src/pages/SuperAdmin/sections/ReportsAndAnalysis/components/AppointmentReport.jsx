@@ -65,36 +65,50 @@ const AppointmentReport = ({ period = "month" }) => {
       </div>
 
       {/* Recent Appointments Table with Pagination */}
-      <div>
-        <h3 className="text-lg font-bold mb-4">Recent Appointments</h3>
-        
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Recent Appointments</h3>
+            <p className="text-sm text-gray-400 mt-1">Latest appointment activity</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400">
+            <Clock className="w-4 h-4" />
+            Live data
+          </div>
+        </div>
+
         {recent.length === 0 ? (
-          <div className="text-center py-10 text-gray-500 border border-dashed rounded-xl">No recent appointments found</div>
+          <div className="text-center py-12 text-gray-500">
+            <AlertCircle className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+            <p>No recent appointments found</p>
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Date</th>
-                    <th className="px-4 py-3 text-left">Doctor</th>
-                    <th className="px-4 py-3 text-left">Patient</th>
-                    <th className="px-4 py-3 text-left">Time</th>
-                    <th className="px-4 py-3 text-left">Status</th>
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr className="text-[11px] uppercase tracking-wider text-gray-400">
+                    <th className="px-6 py-4 text-left font-semibold">Date</th>
+                    <th className="px-6 py-4 text-left font-semibold">Doctor</th>
+                    <th className="px-6 py-4 text-left font-semibold">Patient</th>
+                    <th className="px-6 py-4 text-left font-semibold">Time</th>
+                    <th className="px-6 py-4 text-center font-semibold">Status</th>
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="divide-y divide-gray-100">
                   {paginatedData.map((apt, idx) => (
-                    <tr key={idx} className="border-b hover:bg-gray-50 transition-all cursor-pointer">
-                      <td className="px-4 py-3">{apt.date}</td>
-                      <td className="px-4 py-3 font-medium">{apt.doctor}</td>
-                      <td className="px-4 py-3">{apt.patient}</td>
-                      <td className="px-4 py-3">{apt.time}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                          apt.status === 'Completed' ? 'bg-emerald-100 text-emerald-700' :
-                          apt.status === 'Cancelled' ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'
+                    <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                      <td className="px-6 py-4 text-sm text-gray-600">{apt.date}</td>
+                      <td className="px-6 py-4 text-sm font-semibold text-gray-900">{apt.doctor}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{apt.patient}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">{apt.time}</td>
+                      <td className="px-6 py-4 text-center">
+                        <span className={`px-3 py-1 rounded-full text-[11px] font-bold inline-flex items-center gap-1 ${
+                          apt.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' :
+                          apt.status === 'Cancelled' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-600'
                         }`}>
+                          {apt.status === 'Completed' ? <CheckCircle className="w-3 h-3" /> :
+                           apt.status === 'Cancelled' ? <XCircle className="w-3 h-3" /> : <Clock className="w-3 h-3" />}
                           {apt.status}
                         </span>
                       </td>
@@ -106,21 +120,21 @@ const AppointmentReport = ({ period = "month" }) => {
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between mt-4 px-2">
+              <div className="p-6 border-t border-gray-100 flex items-center justify-between">
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="flex items-center gap-1 px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1 px-4 py-2 text-sm font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
                 >
                   <ChevronLeft className="w-4 h-4" /> Previous
                 </button>
-                <span className="text-sm text-gray-600">
+                <span className="text-sm font-semibold text-gray-600">
                   Page {currentPage} of {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="flex items-center gap-1 px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-1 px-4 py-2 text-sm font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
                 >
                   Next <ChevronRight className="w-4 h-4" />
                 </button>

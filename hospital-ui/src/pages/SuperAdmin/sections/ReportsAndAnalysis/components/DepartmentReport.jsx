@@ -42,27 +42,37 @@ const DepartmentReport = () => {
         </div>
       </div>
 
-      <div>
-        <h3 className="text-lg font-bold mb-4">Department Details</h3>
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-100 flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-lg font-bold text-gray-900">Department Details</h3>
+            <p className="text-sm text-gray-400 mt-1">All department performance metrics</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs font-semibold text-gray-400">
+            <Building2 className="w-4 h-4" />
+            Live data
+          </div>
+        </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-4 py-3 text-left">Department</th>
-                <th className="px-4 py-3 text-left">Doctors</th>
-                <th className="px-4 py-3 text-left">Patients</th>
-                <th className="px-4 py-3 text-left">Appointments</th>
-                <th className="px-4 py-3 text-left">Revenue</th>
+          <table className="w-full">
+            <thead className="bg-gray-50">
+              <tr className="text-[11px] uppercase tracking-wider text-gray-400">
+                <th className="px-6 py-4 text-left font-semibold">Department</th>
+                <th className="px-6 py-4 text-left font-semibold">Doctors</th>
+                <th className="px-6 py-4 text-left font-semibold">Patients</th>
+                <th className="px-6 py-4 text-left font-semibold">Appointments</th>
+                <th className="px-6 py-4 text-right font-semibold">Revenue</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100">
               {paginatedDepartments.map((dept, idx) => (
-                <tr key={idx} className="border-b hover:bg-gray-50 transition-all cursor-pointer">
-                  <td className="px-4 py-3 font-medium">{dept.departmentName}</td>
-                  <td className="px-4 py-3">{dept.totalDoctors}</td>
-                  <td className="px-4 py-3">{dept.totalPatients}</td>
-                  <td className="px-4 py-3">{dept.totalAppointments}</td>
-                  <td className="px-4 py-3 font-semibold text-emerald-600">
+                <tr key={idx} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4 text-sm font-semibold text-gray-900">{dept.departmentName}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{dept.totalDoctors}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{dept.totalPatients}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{dept.totalAppointments}</td>
+                  <td className="px-6 py-4 text-sm font-bold text-emerald-600 text-right">
                     Rs. {dept.revenue ? dept.revenue.toLocaleString() : 0}
                   </td>
                 </tr>
@@ -73,14 +83,20 @@ const DepartmentReport = () => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-between mt-4 px-2">
-            <button onClick={() => setCurrentPage(p => Math.max(p-1,1))} disabled={currentPage===1}
-              className="flex items-center gap-1 px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-50 cursor-pointer">
+          <div className="p-6 border-t border-gray-100 flex items-center justify-between">
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(p-1,1))} 
+              disabled={currentPage===1}
+              className="flex items-center gap-1 px-4 py-2 text-sm font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+            >
               <ChevronLeft className="w-4 h-4" /> Previous
             </button>
-            <span>Page {currentPage} of {totalPages}</span>
-            <button onClick={() => setCurrentPage(p => Math.min(p+1,totalPages))} disabled={currentPage===totalPages}
-              className="flex items-center gap-1 px-4 py-2 text-sm border rounded-lg hover:bg-gray-50 disabled:opacity-50 cursor-pointer">
+            <span className="text-sm font-semibold text-gray-600">Page {currentPage} of {totalPages}</span>
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(p+1,totalPages))} 
+              disabled={currentPage===totalPages}
+              className="flex items-center gap-1 px-4 py-2 text-sm font-semibold border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all cursor-pointer"
+            >
               Next <ChevronRight className="w-4 h-4" />
             </button>
           </div>
