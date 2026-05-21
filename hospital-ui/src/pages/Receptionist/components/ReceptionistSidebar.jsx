@@ -2,9 +2,8 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  LayoutGrid, UserCheck, Plus, Users, Calendar, Clock, CreditCard,
-  UserCog, Phone, FileText, Bell, BarChart3, MessageSquare, Settings, LogOut,
-  Activity
+  LayoutGrid, Users, Calendar, UserCog, Clock, CreditCard,
+  FileText, MessageSquare, BarChart3, Bell, Settings, LogOut, Activity
 } from 'lucide-react';
 
 const NavItem = ({ icon: Icon, label, isActive, onClick }) => (
@@ -18,7 +17,6 @@ const NavItem = ({ icon: Icon, label, isActive, onClick }) => (
       }
     `}
   >
-    {/* Active indicator line */}
     {isActive && (
       <span className="absolute left-0 top-2 bottom-2 w-1 bg-white/80 rounded-full"></span>
     )}
@@ -51,7 +49,6 @@ const ReceptionistSidebar = ({ activeTab, setActiveTab }) => {
 
   return (
     <aside className="w-72 bg-white border-r border-gray-200 hidden md:flex flex-col h-screen shadow-sm">
-      {/* Logo area */}
       <div className="p-6 flex items-center gap-3 border-b border-gray-100">
         <div className="bg-blue-600 p-2 rounded-xl shadow-md">
           <Activity className="text-white w-6 h-6" />
@@ -61,7 +58,6 @@ const ReceptionistSidebar = ({ activeTab, setActiveTab }) => {
         </span>
       </div>
 
-      {/* Navigation with fade effects and custom scroll */}
       <nav className="flex-1 px-3 py-4 space-y-1 overflow-y-auto sidebar-scroll relative">
         {menuItems.map((item) => (
           <NavItem
@@ -73,23 +69,20 @@ const ReceptionistSidebar = ({ activeTab, setActiveTab }) => {
           />
         ))}
 
-        {/* Top & bottom fade gradients */}
         <div className="pointer-events-none absolute top-0 left-0 right-0 h-6 bg-gradient-to-b from-white to-transparent"></div>
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-6 bg-gradient-to-t from-white to-transparent"></div>
       </nav>
 
-      {/* Logout button */}
       <div className="p-4 border-t border-gray-200">
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all w-full group cursor-pointer"
+          className="flex items-center gap-3 px-4 py-3 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all w-full group"
         >
-          <LogOut className="w-5 h-5 group-hover:translate-x-1 transition-transform cursor-pointer" />
+          <LogOut className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
           <span className="font-medium">Logout</span>
         </button>
       </div>
 
-      {/* Custom scrollbar styles */}
       <style>{`
         .sidebar-scroll::-webkit-scrollbar {
           width: 6px;
