@@ -1,74 +1,13 @@
-// pages/Receptionist/ReceptionistDashboard.jsx
-import React, { useState } from 'react';
+import React from 'react';
+import { Outlet, useLocation } from 'react-router-dom';
 import ReceptionistLayout from './components/ReceptionistLayout';
-import PatientManagement from './sections/patient-management/PatientManagement';
-import AppointmentManagement from './sections/appointment-management/AppointmentManagement';
-import DoctorSlotManagement from './sections/doctor-slot-management/DoctorSlotManagement';
-import QueueManagement from './sections/queue-management/QueueManagement';
 import {
   Clock, Filter, MoreHorizontal, Calendar,
   Users, DollarSign, Activity, LayoutDashboard
 } from 'lucide-react';
-import BillingPayment from './sections/billing-payment/BillingPayment';
-import VisitRecords from './sections/visit-records/VisitRecords';
-import CommunicationHub from './sections/communication/CommunicationHub';
-import ReportsOverview from './sections/reports-overview/ReportsOverview';
-import NotificationsHub from './sections/notifications/NotificationsHub';
-import ProfileAndPreferences from './sections/profile/ProfileAndPreferences';
-
-const ReceptionistDashboard = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
-
-const renderContent = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return <DashboardHome />;
-      case 'patient-management':
-        return <PatientManagement />;
-      case 'appointment-management':
-        return <AppointmentManagement />;
-      case 'doctor-slot-management':
-        return <DoctorSlotManagement />;
-        
-      // catch-all variants for the queue tab to prevent the fallback block
-      case 'queue-checkin':
-        return <QueueManagement />;
-      case 'billing-invoice':
-        return <BillingPayment />;
-      case 'visit-records':
-        return <VisitRecords />;
-      case 'communication':
-        return <CommunicationHub />;
-      case 'reports':
-        return <ReportsOverview />;
-      case 'notifications':
-        return <NotificationsHub />;
-      case 'profile':
-        return <ProfileAndPreferences />;
-        
-      default:
-        return (
-          <div className="flex items-center justify-center h-[60vh]">
-            <div className="text-center bg-white border border-gray-200 p-8 rounded-xl shadow-sm max-w-sm">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2 capitalize">
-                {activeTab.replace(/-/g, ' ')}
-              </h2>
-              <p className="text-gray-400 text-sm font-medium">This section segment is currently under development.</p>
-            </div>
-          </div>
-        );
-    }
-  };
-
-  return (
-    <ReceptionistLayout activeTab={activeTab} setActiveTab={setActiveTab}>
-      {renderContent()}
-    </ReceptionistLayout>
-  );
-};
 
 // ================== Dashboard Home Segment ==================
-const DashboardHome = () => {
+export const DashboardHome = () => {   // ← Added 'export'
   const recentCheckIns = [
     { id: 1, name: "Vikas Khanna", doctor: "Dr. Aman (Cardio)", time: "10:15 AM", bill: "Paid" },
     { id: 2, name: "Meera Joshi", doctor: "Dr. Sarah (Ortho)", time: "10:30 AM", bill: "Pending" },
@@ -77,7 +16,6 @@ const DashboardHome = () => {
 
   return (
     <div className="space-y-6">
-      {/* Brand Royal Blue Welcome Banner */}
       <div className="bg-blue-600 rounded-xl px-5 py-6 text-white shadow-sm flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
@@ -90,7 +28,6 @@ const DashboardHome = () => {
         </div>
       </div>
 
-      {/* Synchronized Parameters Quick Status Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <QuickStat label="Active Appointments" count="24" icon={Calendar} color="blue" trend="+12%" />
         <QuickStat label="Waiting Room Queue" count="08" icon={Users} color="amber" trend="-2 slots" />
@@ -98,9 +35,7 @@ const DashboardHome = () => {
         <QuickStat label="Today's Total Revenue" count="₹45k" icon={DollarSign} color="purple" trend="+8% shift" />
       </div>
 
-      {/* Main Grid Section Framework */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-5">
-        {/* Real-time Patient Active Queue Column */}
         <div className="xl:col-span-2 bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col justify-between">
           <div>
             <div className="px-5 py-4 border-b border-gray-100 flex justify-between items-center bg-white">
@@ -134,9 +69,7 @@ const DashboardHome = () => {
                       </td>
                       <td className="px-5 py-4">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wide border
-                          ${item.bill === 'Paid' 
-                            ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-                            : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
+                          ${item.bill === 'Paid' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'}`}>
                           {item.bill}
                         </span>
                       </td>
@@ -151,7 +84,6 @@ const DashboardHome = () => {
           </div>
         </div>
 
-        {/* Dynamic Doctor On-Duty State Column */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 flex flex-col justify-between">
           <div>
             <div className="border-b border-gray-100 pb-3 mb-4">
@@ -172,7 +104,7 @@ const DashboardHome = () => {
   );
 };
 
-// ================== Helper Custom Elements ==================
+// Helper Components
 const QuickStat = ({ label, count, icon: Icon, color, trend }) => {
   const colorClasses = {
     blue: 'border-l-blue-600 bg-blue-50/20 shadow-blue-50/10',
@@ -213,9 +145,7 @@ const DocStatus = ({ name, dept, available }) => (
     </div>
     <div className="flex items-center gap-2">
       <span className={`text-[9px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded border ${
-        available 
-          ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
-          : 'bg-rose-50 text-rose-700 border-rose-200'
+        available ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'
       }`}>
         {available ? 'Active' : 'Offline'}
       </span>
@@ -223,5 +153,16 @@ const DocStatus = ({ name, dept, available }) => (
     </div>
   </div>
 );
+
+const ReceptionistDashboard = () => {
+  const location = useLocation();
+  const isDashboardHome = location.pathname === '/receptionist' || location.pathname === '/receptionist/';
+
+  return (
+    <ReceptionistLayout>
+      {isDashboardHome ? <DashboardHome /> : <Outlet />}
+    </ReceptionistLayout>
+  );
+};
 
 export default ReceptionistDashboard;

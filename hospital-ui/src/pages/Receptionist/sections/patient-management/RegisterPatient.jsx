@@ -1,6 +1,64 @@
-// pages/Receptionist/sections/patient-management/RegisterPatient.jsx
 import React, { useState } from 'react';
 import { Mail, Phone, AlertCircle, CheckCircle, Calendar, MapPin, User } from 'lucide-react';
+import api from '../../../../api/axios';
+
+// --- Components moved outside to fix the focus issue ---
+
+const InputField = ({ label, name, type = 'text', placeholder, required = false, icon: Icon = null, formData, handleInputChange, errors }) => (
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <div className="relative">
+      {Icon && <Icon className="absolute left-3 top-3 w-4 h-4 text-gray-400" />}
+      <input
+        type={type}
+        name={name}
+        value={formData[name] || ''}
+        onChange={handleInputChange}
+        placeholder={placeholder}
+        className={`w-full ${Icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2 text-sm border rounded-xl focus:outline-none transition ${
+          errors[name] ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'
+        } bg-gray-50 focus:bg-white`}
+      />
+    </div>
+    {errors[name] && (
+      <div className="flex items-center gap-1 mt-1 text-red-600 text-xs font-medium">
+        <AlertCircle className="w-3.5 h-3.5" />
+        {errors[name]}
+      </div>
+    )}
+  </div>
+);
+
+const SelectField = ({ label, name, options, required = false, formData, handleInputChange, errors }) => (
+  <div>
+    <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <select
+      name={name}
+      value={formData[name] || ''}
+      onChange={handleInputChange}
+      className={`w-full px-3.5 py-2 text-sm border rounded-xl focus:outline-none transition ${
+        errors[name] ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'
+      } bg-gray-50 focus:bg-white`}
+    >
+      <option value="">Select {label}</option>
+      {options.map(option => (
+        <option key={option} value={option}>{option}</option>
+      ))}
+    </select>
+    {errors[name] && (
+      <div className="flex items-center gap-1 mt-1 text-red-600 text-xs font-medium">
+        <AlertCircle className="w-3.5 h-3.5" />
+        {errors[name]}
+      </div>
+    )}
+  </div>
+);
+
+// --- Main Component ---
 
 const RegisterPatient = () => {
   const [formData, setFormData] = useState({
@@ -17,7 +75,6 @@ const RegisterPatient = () => {
 
   const validateForm = () => {
     const newErrors = {};
-    
     if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
     if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     if (!formData.cnic.trim()) newErrors.cnic = 'CNIC is required';
@@ -35,7 +92,10 @@ const RegisterPatient = () => {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -44,7 +104,7 @@ const RegisterPatient = () => {
 
     setLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await api.post('/receptionist/patient/register', formData);
       setSuccess(true);
       setFormData({
         fullName: '', email: '', phone: '', cnic: '', dateOfBirth: '',
@@ -52,78 +112,23 @@ const RegisterPatient = () => {
         emergencyContact: '', emergencyPhone: '', medicalHistory: '', 
         allergies: '', currentMedications: '',
       });
-      setTimeout(() => setSuccess(false), 3000);
+      setErrors({});
+      setTimeout(() => setSuccess(false), 4000);
     } catch (error) {
-      console.error('Error registering patient:', error);
+      console.error(error);
+      alert(error.response?.data?.message || 'Failed to register patient');
     } finally {
       setLoading(false);
     }
   };
 
-  const InputField = ({ label, name, type = 'text', placeholder, required = false, icon: Icon = null }) => (
-    <div>
-      {/* Standardized label height and weight */}
-      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <div className="relative">
-        {Icon && <Icon className="absolute left-3 top-3 w-4 h-4 text-gray-400" />}
-        <input
-          type={type}
-          name={name}
-          value={formData[name]}
-          onChange={handleInputChange}
-          placeholder={placeholder}
-          className={`w-full ${Icon ? 'pl-9' : 'pl-3.5'} pr-3.5 py-2 text-sm border rounded-xl focus:outline-none transition ${
-            errors[name] ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'
-          } bg-gray-50 focus:bg-white`}
-        />
-      </div>
-      {errors[name] && (
-        <div className="flex items-center gap-1 mt-1 text-red-600 text-xs font-medium">
-          <AlertCircle className="w-3.5 h-3.5" />
-          {errors[name]}
-        </div>
-      )}
-    </div>
-  );
-
-  const SelectField = ({ label, name, options, required = false }) => (
-    <div>
-      <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <select
-        name={name}
-        value={formData[name]}
-        onChange={handleInputChange}
-        className={`w-full px-3.5 py-2 text-sm border rounded-xl focus:outline-none transition ${
-          errors[name] ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'
-        } bg-gray-50 focus:bg-white`}
-      >
-        <option value="">Select {label}</option>
-        {options.map(option => (
-          <option key={option} value={option}>{option}</option>
-        ))}
-      </select>
-      {errors[name] && (
-        <div className="flex items-center gap-1 mt-1 text-red-600 text-xs font-medium">
-          <AlertCircle className="w-3.5 h-3.5" />
-          {errors[name]}
-        </div>
-      )}
-    </div>
-  );
-
   return (
     <div className="space-y-6">
-      {/* Optimized Header Card */}
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl p-6 text-white shadow-sm">
         <h1 className="text-2xl font-bold mb-1">Register New Patient</h1>
         <p className="text-blue-100 text-sm opacity-90">Add comprehensive patient information to the system</p>
       </div>
 
-      {/* Success Alert */}
       {success && (
         <div className="flex items-center gap-3 bg-green-50 border border-green-400 rounded-xl p-3.5">
           <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
@@ -134,19 +139,15 @@ const RegisterPatient = () => {
         </div>
       )}
 
-      {/* Main Form container */}
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200">
-        {/* Tab Selection Row */}
         <div className="flex border-b border-gray-200 bg-gray-50/50 rounded-t-xl">
           {['personal', 'medical', 'emergency'].map(tab => (
             <button
               key={tab}
               type="button"
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 py-3 px-4 text-sm font-semibold text-center transition border-b-2 ${
-                activeTab === tab
-                  ? 'text-blue-600 border-blue-600 bg-white'
-                  : 'text-gray-500 border-transparent hover:text-gray-900 hover:bg-gray-50'
+              className={`flex-1 py-3 px-4 text-sm font-semibold text-center transition border-b-2 cursor-pointer ${
+                activeTab === tab ? 'text-blue-600 border-blue-600 bg-white' : 'text-gray-500 border-transparent hover:text-gray-900 hover:bg-gray-50'
               }`}
             >
               {tab.charAt(0).toUpperCase() + tab.slice(1)} Information
@@ -155,101 +156,65 @@ const RegisterPatient = () => {
         </div>
 
         <div className="p-6">
-          {/* Personal Details Section */}
           {activeTab === 'personal' && (
             <div className="space-y-5">
               <h3 className="text-base font-bold text-gray-900 border-b pb-2 border-gray-100">Personal Details</h3>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputField label="Full Name" name="fullName" placeholder="John Doe" required icon={User} />
-                <InputField label="Email Address" name="email" type="email" placeholder="john@example.com" required icon={Mail} />
-                <InputField label="Phone Number" name="phone" placeholder="03XX-XXXXXXX" required icon={Phone} />
-                <InputField label="CNIC Number" name="cnic" placeholder="XXXXX-XXXXXXX-X" required />
-                <InputField label="Date of Birth" name="dateOfBirth" type="date" required icon={Calendar} />
-                <SelectField label="Gender" name="gender" options={['Male', 'Female', 'Other']} required />
-                <SelectField label="Blood Group" name="bloodGroup" options={['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']} />
+                <InputField label="Full Name" name="fullName" placeholder="John Doe" required icon={User} formData={formData} handleInputChange={handleInputChange} errors={errors} />
+                <InputField label="Email Address" name="email" type="email" placeholder="john@example.com" required icon={Mail} formData={formData} handleInputChange={handleInputChange} errors={errors} />
+                <InputField label="Phone Number" name="phone" placeholder="03XX-XXXXXXX" required icon={Phone} formData={formData} handleInputChange={handleInputChange} errors={errors} />
+                <InputField label="CNIC Number" name="cnic" placeholder="XXXXX-XXXXXXX-X" required formData={formData} handleInputChange={handleInputChange} errors={errors} />
+                <InputField label="Date of Birth" name="dateOfBirth" type="date" required icon={Calendar} formData={formData} handleInputChange={handleInputChange} errors={errors} />
+                <SelectField label="Gender" name="gender" options={['Male', 'Female', 'Other']} required formData={formData} handleInputChange={handleInputChange} errors={errors} />
+                <SelectField label="Blood Group" name="bloodGroup" options={['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']} formData={formData} handleInputChange={handleInputChange} errors={errors} />
               </div>
 
               <div className="space-y-4 mt-6 pt-4 border-t border-gray-100">
                 <h4 className="text-base font-bold text-gray-900">Address Information</h4>
-                <InputField label="Street Address" name="address" placeholder="123 Main Street" required icon={MapPin} />
+                <InputField label="Street Address" name="address" placeholder="123 Main Street" required icon={MapPin} formData={formData} handleInputChange={handleInputChange} errors={errors} />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField label="City" name="city" placeholder="Karachi" required />
-                  <InputField label="Postal Code" name="postalCode" placeholder="75000" />
+                  <InputField label="City" name="city" placeholder="Karachi" required formData={formData} handleInputChange={handleInputChange} errors={errors} />
+                  <InputField label="Postal Code" name="postalCode" placeholder="75000" formData={formData} handleInputChange={handleInputChange} errors={errors} />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Medical Details Section */}
           {activeTab === 'medical' && (
             <div className="space-y-5">
               <h3 className="text-base font-bold text-gray-900 border-b pb-2 border-gray-100">Medical History</h3>
-              
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Medical History</label>
-                  <textarea
-                    name="medicalHistory"
-                    value={formData.medicalHistory}
-                    onChange={handleInputChange}
-                    placeholder="List any previous medical conditions, surgeries, or treatments..."
-                    rows="3"
-                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white text-sm"
-                  />
+                  <textarea name="medicalHistory" value={formData.medicalHistory} onChange={handleInputChange} rows="3"
+                    placeholder="List any previous medical conditions..." className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white text-sm" />
                 </div>
-
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Allergies</label>
-                  <textarea
-                    name="allergies"
-                    value={formData.allergies}
-                    onChange={handleInputChange}
-                    placeholder="List any known allergies..."
-                    rows="3"
-                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white text-sm"
-                  />
+                  <textarea name="allergies" value={formData.allergies} onChange={handleInputChange} rows="3"
+                    placeholder="List any known allergies..." className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white text-sm" />
                 </div>
-
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1.5">Current Medications</label>
-                  <textarea
-                    name="currentMedications"
-                    value={formData.currentMedications}
-                    onChange={handleInputChange}
-                    placeholder="List current medications with dosage..."
-                    rows="3"
-                    className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white text-sm"
-                  />
+                  <textarea name="currentMedications" value={formData.currentMedications} onChange={handleInputChange} rows="3"
+                    placeholder="List current medications with dosage..." className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white text-sm" />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Emergency Details Section */}
           {activeTab === 'emergency' && (
             <div className="space-y-5">
               <h3 className="text-base font-bold text-gray-900 border-b pb-2 border-gray-100">Emergency Contact Information</h3>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputField label="Emergency Contact Name" name="emergencyContact" placeholder="Emergency contact person" icon={User} />
-                <InputField label="Emergency Contact Phone" name="emergencyPhone" placeholder="03XX-XXXXXXX" icon={Phone} />
-              </div>
-
-              <div className="mt-4 p-3.5 bg-blue-50/60 border border-blue-100 rounded-xl">
-                <p className="text-sm text-blue-900">
-                  <span className="font-semibold">Note:</span> Emergency contact details are critical and will be targeted primarily during urgent clinical situations.
-                </p>
+                <InputField label="Emergency Contact Name" name="emergencyContact" placeholder="Emergency contact person" icon={User} formData={formData} handleInputChange={handleInputChange} errors={errors} />
+                <InputField label="Emergency Contact Phone" name="emergencyPhone" placeholder="03XX-XXXXXXX" icon={Phone} formData={formData} handleInputChange={handleInputChange} errors={errors} />
               </div>
             </div>
           )}
 
-          {/* Compressed Action Control Buttons */}
           <div className="flex gap-3 mt-8 pt-5 border-t border-gray-100 justify-end">
-            <button
-              type="button"
-              className="px-5 py-2 text-sm font-semibold border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition min-w-[100px]"
-            >
+            <button type="button" className="px-5 py-2 text-sm font-semibold border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition min-w-[100px]">
               Cancel
             </button>
             <button

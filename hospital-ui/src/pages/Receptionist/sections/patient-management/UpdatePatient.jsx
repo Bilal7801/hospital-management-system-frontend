@@ -1,182 +1,137 @@
-// pages/Receptionist/sections/patient-management/UpdatePatient.jsx
-import React, { useState } from 'react';
-import { Mail, Phone, AlertCircle, CheckCircle, Save, X, Calendar, MapPin, User } from 'lucide-react';
-
-const INITIAL_PATIENT_DATA = {
-  fullName: 'Ahmed Khan',
-  email: 'ahmed@example.com',
-  phone: '0300-1234567',
-  cnic: '12345-6789012-3',
-  dateOfBirth: '1995-03-15',
-  gender: 'Male',
-  bloodGroup: 'O+',
-  address: '123 Main Street',
-  city: 'Karachi',
-  postalCode: '75000',
-  emergencyContact: 'Fatima Khan',
-  emergencyPhone: '0321-9876543',
-  medicalHistory: 'Previous respiratory infection, controlled hypertension',
-  allergies: 'Penicillin allergy',
-  currentMedications: 'Amlodipine 5mg daily, Aspirin 100mg daily',
-};
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, User, Mail, Phone, Calendar, MapPin } from 'lucide-react';
+import api from '../../../../api/axios';
 
 const UpdatePatient = () => {
-  const [formData, setFormData] = useState({ ...INITIAL_PATIENT_DATA });
-  const [changes, setChanges] = useState({});
-  const [errors, setErrors] = useState({});
-  const [loading, setLoading] = useState(false);
+  const { patientId } = useParams();
+  const navigate = useNavigate();
+
+  const [formData, setFormData] = useState({
+    fullName: '', email: '', phone: '', cnic: '', dateOfBirth: '',
+    gender: '', bloodGroup: '', address: '', city: '', postalCode: '',
+    emergencyContact: '', emergencyPhone: '', medicalHistory: '',
+    allergies: '', currentMedications: '',
+  });
+
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [success, setSuccess] = useState(false);
   const [activeTab, setActiveTab] = useState('personal');
 
-  const validateForm = () => {
-    const newErrors = {};
-    
-    if (!formData.fullName.trim()) newErrors.fullName = 'Full name is required';
-    if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
-    if (!formData.email.trim()) newErrors.email = 'Email is required';
-    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
-    if (!formData.address.trim()) newErrors.address = 'Address is required';
-    if (!formData.city.trim()) newErrors.city = 'City is required';
+  // Load patient data
+  useEffect(() => {
+    if (!patientId) {
+      navigate('/receptionist/patient-management');
+      return;
+    }
 
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+    const fetchPatient = async () => {
+      try {
+        const response = await api.get(`/receptionist/patient/${patientId}`);
+        const p = response.data;
+
+        setFormData({
+          fullName: p.fullName || '',
+          email: p.email || '',
+          phone: p.phone || '',
+          cnic: p.cnic || '',
+          dateOfBirth: p.dateOfBirth ? p.dateOfBirth.split('T')[0] : '',
+          gender: p.gender || '',
+          bloodGroup: p.bloodGroup || '',
+          address: p.address || '',
+          city: p.city || '',
+          postalCode: p.postalCode || '',
+          emergencyContact: p.emergencyContact || '',
+          emergencyPhone: p.emergencyPhone || '',
+          medicalHistory: p.medicalHistory || '',
+          allergies: p.allergies || '',
+          currentMedications: p.currentMedications || '',
+        });
+      } catch (err) {
+        console.error(err);
+        alert("Failed to load patient data");
+        navigate('/receptionist/patient-management');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPatient();
+  }, [patientId, navigate]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    if (INITIAL_PATIENT_DATA[name] !== value) {
-      setChanges(prev => ({ ...prev, [name]: value }));
-    } else {
-      setChanges(prev => {
-        const updated = { ...prev };
-        delete updated[name];
-        return updated;
-      });
-    }
-
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
 
-    setLoading(true);
+    setSaving(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await api.put('/receptionist/patient/update', {
+        patientId: parseInt(patientId),
+        fullName: formData.fullName,
+        email: formData.email,
+        phone: formData.phone,
+        cnic: formData.cnic,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
+        bloodGroup: formData.bloodGroup,
+        address: formData.address,
+        city: formData.city,
+        postalCode: formData.postalCode,
+        emergencyContact: formData.emergencyContact,
+        emergencyPhone: formData.emergencyPhone,
+        medicalHistory: formData.medicalHistory,
+        allergies: formData.allergies,
+        currentMedications: formData.currentMedications,
+      });
+
       setSuccess(true);
-      setChanges({});
       setTimeout(() => setSuccess(false), 3000);
     } catch (error) {
-      console.error('Error updating patient:', error);
+      console.error(error);
+      alert(error.response?.data?.message || 'Failed to update patient. Please check all fields.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   const handleCancel = () => {
-    setFormData({ ...INITIAL_PATIENT_DATA });
-    setChanges({});
-    setErrors({});
+    navigate('/receptionist/patient-management');
   };
 
-  const InputField = ({ label, name, type = 'text', placeholder, required = false, icon: Icon = null }) => (
-    <div>
-      <label className="block text-xs font-bold text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <div className="relative">
-        {Icon && <Icon className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />}
-        <input
-          type={type}
-          name={name}
-          value={formData[name] || ''}
-          onChange={handleInputChange}
-          placeholder={placeholder}
-          className={`w-full ${Icon ? 'pl-9' : 'pl-3'} pr-3 py-1.5 text-sm border rounded-xl focus:outline-none transition-colors ${
-            errors[name] ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'
-          } bg-gray-50 focus:bg-white`}
-        />
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-96">
+        <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full"></div>
       </div>
-      {errors[name] && (
-        <div className="flex items-center gap-1 mt-1 text-red-600 text-[11px] font-medium">
-          <AlertCircle className="w-3.5 h-3.5" />
-          {errors[name]}
-        </div>
-      )}
-    </div>
-  );
-
-  const SelectField = ({ label, name, options, required = false }) => (
-    <div>
-      <label className="block text-xs font-bold text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      <select
-        name={name}
-        value={formData[name] || ''}
-        onChange={handleInputChange}
-        className={`w-full px-3 py-1.5 text-sm border rounded-xl focus:outline-none transition-colors cursor-pointer ${
-          errors[name] ? 'border-red-500 focus:border-red-500' : 'border-gray-200 focus:border-blue-500'
-        } bg-gray-50 focus:bg-white text-gray-800`}
-      >
-        <option value="">Select {label}</option>
-        {options.map(option => (
-          <option key={option} value={option}>{option}</option>
-        ))}
-      </select>
-      {errors[name] && (
-        <div className="flex items-center gap-1 mt-1 text-red-600 text-[11px] font-medium">
-          <AlertCircle className="w-3.5 h-3.5" />
-          {errors[name]}
-        </div>
-      )}
-    </div>
-  );
+    );
+  }
 
   return (
     <div className="space-y-4">
-      {/* Header Panel */}
+      <button 
+        onClick={handleCancel} 
+        className="flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-blue-600 transition-colors cursor-pointer"
+      >
+        <ArrowLeft className="w-4 h-4" /> Back to Patient Management
+      </button>
+
       <div className="bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl px-5 py-4 text-white shadow-sm">
         <h1 className="text-xl font-bold tracking-tight">Update Patient Details</h1>
         <p className="text-blue-100 text-sm mt-0.5">Modify and manage patient records efficiently</p>
       </div>
 
-      {/* Alert Messaging Stacks */}
       {success && (
-        <div className="flex items-center gap-2.5 bg-green-50 border border-green-200 rounded-xl px-4 py-2.5">
-          <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-bold text-green-900">Patient updated successfully!</p>
-            <p className="text-green-700 text-xs mt-0.5">All modifications have been processed and saved.</p>
-          </div>
+        <div className="bg-green-50 border border-green-200 rounded-xl p-4 text-green-700 font-semibold flex items-center gap-2">
+          ✅ Patient updated successfully!
         </div>
       )}
 
-      {Object.keys(changes).length > 0 && (
-        <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
-          <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0" />
-          <div>
-            <p className="text-sm font-bold text-amber-900">Unsaved Changes Detected</p>
-            <p className="text-amber-700 text-xs mt-0.5">{Object.keys(changes).length} field(s) have been modified and require submission.</p>
-          </div>
-        </div>
-      )}
-
-      {/* Main Core Editor Form */}
       <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        
-        {/* Compressed Navigation Tabs */}
         <div className="flex border-b border-gray-100 bg-gray-50/50">
           {['personal', 'medical', 'emergency'].map(tab => (
             <button
@@ -184,8 +139,8 @@ const UpdatePatient = () => {
               type="button"
               onClick={() => setActiveTab(tab)}
               className={`flex-1 py-2.5 px-4 text-xs font-bold text-center tracking-wider uppercase border-b transition-all cursor-pointer ${
-                activeTab === tab
-                  ? 'text-blue-600 border-blue-600 bg-white font-extrabold shadow-[inset_0_2px_0_0_rgba(37,99,235,1)]'
+                activeTab === tab 
+                  ? 'text-blue-600 border-blue-600 bg-white font-extrabold' 
                   : 'text-gray-500 border-transparent hover:text-gray-800 hover:bg-gray-50'
               }`}
             >
@@ -195,7 +150,6 @@ const UpdatePatient = () => {
         </div>
 
         <div className="p-5">
-          {/* Section A: Personal Information */}
           {activeTab === 'personal' && (
             <div className="space-y-4">
               <div className="border-b border-gray-100 pb-2">
@@ -203,129 +157,223 @@ const UpdatePatient = () => {
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputField label="Full Name" name="fullName" placeholder="John Doe" required icon={User} />
-                <InputField label="Email Address" name="email" type="email" placeholder="john@example.com" required icon={Mail} />
-                <InputField label="Phone Number" name="phone" placeholder="03XX-XXXXXXX" required icon={Phone} />
-                <InputField label="CNIC Number" name="cnic" placeholder="XXXXX-XXXXXXX-X" required />
-                <InputField label="Date of Birth" name="dateOfBirth" type="date" required icon={Calendar} />
-                <SelectField label="Gender" name="gender" options={['Male', 'Female', 'Other']} required />
-                <SelectField label="Blood Group" name="bloodGroup" options={['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']} />
+                <InputField 
+                  label="Full Name" 
+                  name="fullName" 
+                  required 
+                  icon={User} 
+                  value={formData.fullName} 
+                  onChange={handleInputChange}
+                  placeholder="John Doe" 
+                />
+                <InputField 
+                  label="Email Address" 
+                  name="email" 
+                  type="email" 
+                  required 
+                  icon={Mail} 
+                  value={formData.email} 
+                  onChange={handleInputChange}
+                  placeholder="john@example.com" 
+                />
+                <InputField 
+                  label="Phone Number" 
+                  name="phone" 
+                  required 
+                  icon={Phone} 
+                  value={formData.phone} 
+                  onChange={handleInputChange}
+                  placeholder="03XX-XXXXXXX" 
+                />
+                <InputField 
+                  label="CNIC Number" 
+                  name="cnic" 
+                  required 
+                  value={formData.cnic} 
+                  onChange={handleInputChange}
+                  placeholder="XXXXX-XXXXXXX-X" 
+                />
+                <InputField 
+                  label="Date of Birth" 
+                  name="dateOfBirth" 
+                  type="date" 
+                  required 
+                  icon={Calendar} 
+                  value={formData.dateOfBirth} 
+                  onChange={handleInputChange} 
+                />
+                <SelectField 
+                  label="Gender" 
+                  name="gender" 
+                  options={['Male', 'Female', 'Other']} 
+                  value={formData.gender} 
+                  onChange={handleInputChange} 
+                />
+                <SelectField 
+                  label="Blood Group" 
+                  name="bloodGroup" 
+                  options={['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-']} 
+                  value={formData.bloodGroup} 
+                  onChange={handleInputChange} 
+                />
               </div>
 
               <div className="space-y-4 mt-5 pt-4 border-t border-gray-100">
-                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Address Routing</h4>
-                <InputField label="Street Address" name="address" placeholder="123 Main Street" required icon={MapPin} />
+                <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Address Information</h4>
+                <InputField 
+                  label="Street Address" 
+                  name="address" 
+                  required 
+                  icon={MapPin} 
+                  value={formData.address} 
+                  onChange={handleInputChange}
+                  placeholder="123 Main Street, Phase 2" 
+                />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <InputField label="City" name="city" placeholder="Karachi" required />
-                  <InputField label="Postal Code" name="postalCode" placeholder="75000" />
+                  <InputField 
+                    label="City" 
+                    name="city" 
+                    required 
+                    value={formData.city} 
+                    onChange={handleInputChange}
+                    placeholder="Sialkot" 
+                  />
+                  <InputField 
+                    label="Postal Code" 
+                    name="postalCode" 
+                    value={formData.postalCode} 
+                    onChange={handleInputChange}
+                    placeholder="51310" 
+                  />
                 </div>
               </div>
             </div>
           )}
 
-          {/* Section B: Medical Profile Details */}
           {activeTab === 'medical' && (
             <div className="space-y-4">
               <div className="border-b border-gray-100 pb-2">
-                <h3 className="text-sm font-bold text-gray-900">Clinical Background</h3>
+                <h3 className="text-sm font-bold text-gray-900">Medical Information</h3>
               </div>
-              
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Medical History</label>
-                <textarea
-                  name="medicalHistory"
-                  value={formData.medicalHistory || ''}
-                  onChange={handleInputChange}
-                  placeholder="List any previous medical conditions, surgeries, or treatments..."
-                  rows="3"
-                  className="w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white text-sm cursor-pointer transition-colors"
+                <textarea 
+                  name="medicalHistory" 
+                  value={formData.medicalHistory} 
+                  onChange={handleInputChange} 
+                  rows="3" 
+                  placeholder="Diabetes, Hypertension, Previous Surgery..."
+                  className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white text-sm"
                 />
               </div>
-
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Allergies</label>
-                <textarea
-                  name="allergies"
-                  value={formData.allergies || ''}
-                  onChange={handleInputChange}
-                  placeholder="List any known allergies (medications, food, environmental, etc.)..."
-                  rows="3"
-                  className="w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white text-sm cursor-pointer transition-colors"
+                <textarea 
+                  name="allergies" 
+                  value={formData.allergies} 
+                  onChange={handleInputChange} 
+                  rows="3" 
+                  placeholder="Penicillin, Dust, Nuts..."
+                  className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white text-sm"
                 />
               </div>
-
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Current Medications</label>
-                <textarea
-                  name="currentMedications"
-                  value={formData.currentMedications || ''}
-                  onChange={handleInputChange}
-                  placeholder="List current medications with dosage..."
-                  rows="3"
-                  className="w-full px-3 py-1.5 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white text-sm cursor-pointer transition-colors"
+                <textarea 
+                  name="currentMedications" 
+                  value={formData.currentMedications} 
+                  onChange={handleInputChange} 
+                  rows="3" 
+                  placeholder="Metformin 500mg, Amlodipine 5mg..."
+                  className="w-full px-3.5 py-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white text-sm"
                 />
               </div>
             </div>
           )}
 
-          {/* Section C: Emergency Metrics */}
           {activeTab === 'emergency' && (
             <div className="space-y-4">
               <div className="border-b border-gray-100 pb-2">
-                <h3 className="text-sm font-bold text-gray-900">Crisis Contacts</h3>
+                <h3 className="text-sm font-bold text-gray-900">Emergency Contact</h3>
               </div>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <InputField label="Emergency Contact Name" name="emergencyContact" placeholder="Emergency contact person" icon={User} />
-                <InputField label="Emergency Contact Phone" name="emergencyPhone" placeholder="03XX-XXXXXXX" icon={Phone} />
-              </div>
-
-              <div className="mt-4 p-3 bg-blue-50/60 border border-blue-100 rounded-xl">
-                <p className="text-xs text-blue-800 font-medium">
-                  <span className="font-bold">Notice:</span> Crisis contact indexes are highly restricted and utilized only during acute clinical emergencies.
-                </p>
+                <InputField 
+                  label="Emergency Contact Name" 
+                  name="emergencyContact" 
+                  icon={User} 
+                  value={formData.emergencyContact} 
+                  onChange={handleInputChange}
+                  placeholder="Muhammad Ahmed" 
+                />
+                <InputField 
+                  label="Emergency Contact Phone" 
+                  name="emergencyPhone" 
+                  icon={Phone} 
+                  value={formData.emergencyPhone} 
+                  onChange={handleInputChange}
+                  placeholder="03XX-XXXXXXX" 
+                />
               </div>
             </div>
           )}
 
-          {/* Action Trigger Buttons Container */}
-          <div className="flex gap-3 mt-6 pt-4 border-t border-gray-100">
-            <button
-              type="button"
-              onClick={handleCancel}
-              className="flex-1 px-4 py-1.5 text-xs font-bold border border-gray-200 rounded-xl text-gray-700 bg-white hover:bg-gray-50 transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+          <div className="flex gap-3 mt-8 pt-5 border-t border-gray-100">
+            <button 
+              type="button" 
+              onClick={handleCancel} 
+              className="flex-1 px-5 py-2.5 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition"
             >
-              <X className="w-4 h-4" />
-              <span>Cancel Changes</span>
+              Cancel
             </button>
-            <button
-              type="submit"
-              disabled={loading || Object.keys(changes).length === 0}
-              className="flex-1 px-4 py-1.5 text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white rounded-xl disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
+            <button 
+              type="submit" 
+              disabled={saving} 
+              className="flex-1 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 transition font-semibold"
             >
-              <Save className="w-4 h-4" />
-              <span>{loading ? 'Processing...' : 'Save Patient Records'}</span>
+              {saving ? 'Saving Changes...' : 'Save Changes'}
             </button>
           </div>
         </div>
       </form>
-
-      {/* Bottom Segment Meta Information */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
-        <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2.5">System Audit Summary</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase">System Patient ID</p>
-            <p className="text-sm text-gray-800 font-bold mt-0.5">PID-78492</p>
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-gray-400 uppercase">First Database Entry</p>
-            <p className="text-sm text-gray-800 font-bold mt-0.5">January 15, 2024</p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };
+
+// Helper Components
+const InputField = ({ label, name, type = 'text', placeholder = '', required = false, icon: Icon = null, value, onChange }) => (
+  <div>
+    <label className="block text-xs font-bold text-gray-700 mb-1">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <div className="relative">
+      {Icon && <Icon className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />}
+      <input
+        type={type}
+        name={name}
+        value={value || ''}
+        onChange={onChange}
+        placeholder={placeholder}
+        className="w-full pl-9 pr-3 py-1.5 text-sm border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white transition"
+      />
+    </div>
+  </div>
+);
+
+const SelectField = ({ label, name, options, value, onChange }) => (
+  <div>
+    <label className="block text-xs font-bold text-gray-700 mb-1">{label}</label>
+    <select 
+      name={name} 
+      value={value || ''} 
+      onChange={onChange} 
+      className="w-full px-3 py-1.5 text-sm border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none bg-gray-50 focus:bg-white transition"
+    >
+      <option value="">Select {label}</option>
+      {options.map(option => (
+        <option key={option} value={option}>{option}</option>
+      ))}
+    </select>
+  </div>
+);
 
 export default UpdatePatient;
