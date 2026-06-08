@@ -1,85 +1,177 @@
-import React, { useState } from 'react';
-import { UploadCloud, FileSpreadsheet, Trash2, CheckCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { UploadCloud, FileSpreadsheet, Trash2, CheckCircle, Loader2, AlertCircle, Users } from 'lucide-react';
+import api from '../../../../api/axios';
 
 const UploadDocuments = () => {
+  const [selectedPatientId, setSelectedPatientId] = useState('');
   const [docCategory, setDocCategory] = useState('prescription');
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState('');
+  const [patients, setPatients] = useState([]);
 
-  const activeStagedFiles = [
-    { id: 1, name: "Rx_Consultation_Scan_449.pdf", size: "1.4 MB", tag: "Prescription" },
-    { id: 2, name: "Lab_Haematology_Report.png", size: "890 KB", tag: "Diagnostic Report" },
-  ];
+  // Fetch Patients
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const response = await api.get('/receptionist/patient/search?searchTerm=&page=1&pageSize=200');
+        setPatients(response.data.data || []);
+      } catch (err) {
+        console.error("Failed to load patients", err);
+      }
+    };
+    fetchPatients();
+  }, []);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) setSelectedFile(file);
+  };
+
+  const handleUpload = async () => {
+    if (!selectedPatientId) {
+      setError("Please select a patient");
+      return;
+    }
+    if (!selectedFile) {
+      setError("Please select a file to upload");
+      return;
+    }
+
+    setUploading(true);
+    setError('');
+    setSuccess(false);
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('patientId', selectedPatientId);
+    formData.append('documentType', docCategory);
+
+    try {
+      const response = await api.post('/receptionist/visit-records/document', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+
+      if (response.data.success) {
+        setSuccess(true);
+        setSelectedFile(null);
+        setTimeout(() => setSuccess(false), 2500);
+      }
+    } catch (err) {
+      console.error(err);
+      setError(err.response?.data?.message || "Failed to upload document");
+    } finally {
+      setUploading(false);
+    }
+  };
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-      <div className="border-b border-gray-100 pb-3">
-        <h3 className="text-sm font-bold text-gray-800 flex items-center gap-2">
-          <UploadCloud className="w-4 h-4 text-blue-600" />
+    <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-6">
+      <div className="border-b border-gray-100 pb-4">
+        <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-3">
+          <UploadCloud className="w-5 h-5 text-blue-600" />
           Clinical File Asset Intake System
         </h3>
-        <p className="text-xs text-gray-400 mt-0.5">Attach physical prescriptions, local imaging files, and diagnostic slips securely into core charts</p>
+        <p className="text-sm text-gray-500 mt-1">Attach prescriptions, lab reports, and supporting documents securely</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Upload Selection Fields Column */}
-        <div className="md:col-span-1 space-y-4">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Panel - Selection */}
+        <div className="lg:col-span-5 space-y-6">
+          {/* Patient Selection */}
           <div>
-            <label className="block text-xs font-bold text-gray-700 mb-1.5">Document Group Category Tag</label>
+            <label className="block text-xs font-bold text-gray-700 mb-2">Select Patient</label>
             <select
-              value={docCategory}
-              onChange={(e) => setDocCategory(e.target.value)}
-              className="w-full px-3 py-2.5 text-sm border border-gray-200 rounded-xl focus:outline-none focus:border-blue-600 bg-gray-50 text-gray-800 font-semibold cursor-pointer transition-all"
+              value={selectedPatientId}
+              onChange={(e) => setSelectedPatientId(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none text-sm"
+              required
             >
-              <option value="prescription">Official Patient Prescription</option>
-              <option value="report">Laboratory Diagnostic Report</option>
-              <option value="insurance">Insurance Claim Settlement Sheet</option>
-              <option value="id-proof">National Identification Scan</option>
+              <option value="">Select Patient...</option>
+              {patients.map(p => (
+                <option key={p.id} value={p.id}>
+                  {p.fullName} {p.patientIdCode ? `(${p.patientIdCode})` : ''}
+                </option>
+              ))}
             </select>
           </div>
 
-          {/* Faux File Drop Target Drag Frame */}
-          <div className="border-2 border-dashed border-gray-200 hover:border-blue-500 rounded-xl p-5 text-center transition-all bg-gray-50/50 flex flex-col items-center justify-center cursor-pointer group">
-            <UploadCloud className="w-8 h-8 text-gray-400 group-hover:text-blue-600 transition-colors mb-2" />
-            <span className="text-xs font-bold text-gray-700 block">Select Target Data File</span>
-            <span className="text-[10px] text-gray-400 font-medium block mt-0.5">PDF, PNG, JPG up to 10MB</span>
+          {/* Document Category */}
+          <div>
+            <label className="block text-xs font-bold text-gray-700 mb-2">Document Category</label>
+            <select
+              value={docCategory}
+              onChange={(e) => setDocCategory(e.target.value)}
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none text-sm"
+            >
+              <option value="prescription">Official Patient Prescription</option>
+              <option value="report">Laboratory / Diagnostic Report</option>
+              <option value="insurance">Insurance Claim Document</option>
+              <option value="id-proof">National ID / Proof</option>
+              <option value="other">Other Document</option>
+            </select>
           </div>
-        </div>
 
-        {/* Live Staged Records Subgrid */}
-        <div className="md:col-span-2 space-y-3">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-gray-400 block mb-1">
-            Queued Record Transfers Pending Database Commit
-          </span>
+          {/* File Upload Area */}
+          <div 
+            className="border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-2xl p-10 text-center transition-all cursor-pointer group"
+            onClick={() => document.getElementById('fileInput').click()}
+          >
+            <UploadCloud className="w-12 h-12 mx-auto text-gray-400 group-hover:text-blue-500 transition-colors" />
+            <p className="mt-4 font-medium text-gray-700">Click to select file or drag & drop</p>
+            <p className="text-xs text-gray-400 mt-1">PDF, PNG, JPG • Max 10MB</p>
+            
+            <input
+              id="fileInput"
+              type="file"
+              className="hidden"
+              onChange={handleFileSelect}
+            />
+          </div>
 
-          <div className="space-y-2">
-            {activeStagedFiles.map((file) => (
-              <div key={file.id} className="flex items-center justify-between p-3.5 border border-gray-100 rounded-xl bg-gray-50/60 text-xs hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-white border border-gray-100 rounded-lg text-blue-600 shadow-sm">
-                    <FileSpreadsheet className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-gray-800">{file.name}</p>
-                    <div className="flex items-center gap-2 mt-0.5 text-[10px] text-gray-400 font-bold">
-                      <span>{file.size}</span>
-                      <span className="w-1 h-1 rounded-full bg-gray-300"></span>
-                      <span className="text-blue-600 uppercase tracking-wide text-[9px]">{file.tag}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <span className="flex items-center gap-1 text-[10px] bg-emerald-50 text-emerald-700 border border-emerald-100 font-extrabold px-2 py-0.5 rounded-md">
-                    <CheckCircle className="w-3 h-3" /> Ready
-                  </span>
-                  <button className="text-gray-400 hover:text-rose-600 transition-colors cursor-pointer p-1">
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+          {selectedFile && (
+            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <FileSpreadsheet className="w-5 h-5 text-blue-600" />
+                <div className="text-sm">
+                  <p className="font-medium text-gray-800 truncate max-w-[220px]">{selectedFile.name}</p>
+                  <p className="text-xs text-gray-500">{(selectedFile.size / 1024 / 1024).toFixed(2)} MB</p>
                 </div>
               </div>
-            ))}
+              <button
+                onClick={handleUpload}
+                disabled={uploading || !selectedPatientId}
+                className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white px-5 py-2 rounded-xl text-sm font-semibold"
+              >
+                {uploading ? 'Uploading...' : 'Upload'}
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Right Panel - Uploaded Files */}
+        <div className="lg:col-span-7">
+          <h4 className="text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Recently Uploaded Documents</h4>
+          <div className="border border-gray-200 rounded-xl p-6 text-center text-gray-400 min-h-[200px] flex items-center justify-center">
+            Uploaded documents will appear here
           </div>
         </div>
       </div>
+
+      {error && (
+        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-xl flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 mt-0.5" />
+          {error}
+        </div>
+      )}
+
+      {success && (
+        <div className="p-4 bg-emerald-50 border border-emerald-200 text-emerald-700 rounded-xl flex items-start gap-3">
+          <CheckCircle className="w-5 h-5 mt-0.5" />
+          Document uploaded successfully!
+        </div>
+      )}
     </div>
   );
 };
