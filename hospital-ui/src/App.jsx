@@ -45,7 +45,7 @@ import ReportsAnalytics from "./pages/SuperAdmin/sections/ReportsAndAnalysis/Rep
 import NoticeAndAnnouncements from "./pages/SuperAdmin/sections/NoticeAndAnnouncements/NoticeAndAnnouncements";
 import Profile from "./pages/SuperAdmin/sections/Profile";
 
-// Receptionist Components (Importing both Dashboard shell and the home layout view)
+// Receptionist Components
 import ReceptionistDashboard, { DashboardHome } from "./pages/Receptionist/ReceptionistDashboard";
 import PatientManagement from "./pages/Receptionist/sections/patient-management/PatientManagement";
 import PatientDetails from "./pages/Receptionist/sections/patient-management/PatientDetails";
@@ -60,8 +60,27 @@ import NotificationsHub from "./pages/Receptionist/sections/notifications/Notifi
 import ProfileAndPreferences from "./pages/Receptionist/sections/profile/ProfileAndPreferences";
 import UpdatePatient from "./pages/Receptionist/sections/patient-management/UpdatePatient";
 
-// Doctor & Patient Dashboards
+// Doctor Core Layout Components
 import DoctorDashboard from "./pages/Doctor/DoctorDashboard";
+import DoctorAppointments from "./pages/Doctor/sections/Appointment/DoctorAppointments";
+import DoctorPatients from "./pages/Doctor/sections/Patients/DoctorPatients";
+import DoctorOverview from "./pages/Doctor/sections/DoctorOverview";
+import DoctorConsultations from "./pages/Doctor/sections/Consultations/DoctorConsultations";
+import DoctorPrescriptions from "./pages/Doctor/sections/Prescriptions/DoctorPrescriptions";
+import DoctorLabImaging from "./pages/Doctor/sections/LabImaging/DoctorLabImaging";
+import FollowUpDashboard from './pages/Doctor/sections/follow-ups/FollowUpDashboard';
+import MedicalRecordsDashboard from './pages/Doctor/sections/medical-records/MedicalRecordsDashboard';
+import TasksDashboard from './pages/Doctor/sections/tasks-reminders/TasksDashboard';
+import CommunicationDashboard from './pages/Doctor/sections/communication/CommunicationDashboard';
+import ReportsDashboard from './pages/Doctor/sections/reports/ReportsDashboard';
+import ProfileSettingsDashboard from './pages/Doctor/sections/settings/ProfileSettingsDashboard';
+// Temporary placeholders uncommented as they get built out
+// import MyPatients from "./pages/Doctor/sections/MyPatients";
+// import Prescriptions from "./pages/Doctor/sections/Prescriptions";
+// import Consultations from "./pages/Doctor/sections/Consultations";
+// import DoctorNotifications from "./pages/Doctor/sections/DoctorNotifications";
+
+// Patient Dashboard Component
 import PatientDashboard from "./pages/Patient/PatientDashboard";
 
 const ProtectedRoute = ({ children, allowedRole }) => {
@@ -125,7 +144,7 @@ function App() {
           <Route path="billing/payments" element={<Payments />} />
           <Route path="billing/payments/:id" element={<ViewPayment />} />
           <Route path="billing/revenue" element={<RevenueReports />} />
-          <Route path="billing/methods" element={<PaymentMethods />} />
+          <Route path="billing/methods" border element={<PaymentMethods />} />
           <Route path="billing/transactions" element={<Transactions />} />
           <Route path="reports" element={<ReportsAnalytics />} />
           <Route path="notices" element={<NoticeAndAnnouncements />} />
@@ -141,10 +160,7 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* Main Reception Home Panel */}
           <Route index element={<DashboardHome />} />
-          
-          {/* Complete Active Functional Sections */}
           <Route path="patient-management" element={<PatientManagement />} />
           <Route path="patient/details/:patientId" element={<PatientDetails />} />
           <Route path="appointment-management" element={<AppointmentManagement />} />
@@ -159,7 +175,7 @@ function App() {
           <Route path="patient/edit/:patientId" element={<UpdatePatient />} />
         </Route>
 
-        {/* Doctor Role */}
+        {/* Doctor Nested Route Architecture */}
         <Route
           path="/doctor"
           element={
@@ -167,7 +183,30 @@ function App() {
               <DoctorDashboard />
             </ProtectedRoute>
           }
-        />
+        >
+          {/* Automatic Fallback Redirect to appointments component */}
+          <Route index element={<Navigate to="appointments" replace />} />
+          
+          {/* Active Appointments Operational Module */}
+          <Route path="appointments" element={<DoctorAppointments />} />
+          <Route path="overview" element={<DoctorOverview />} />
+          <Route path="patients" element={<DoctorPatients />} />
+          <Route path="consultations" element={<DoctorConsultations />} />
+          <Route path="prescriptions" element={<DoctorPrescriptions />} />
+          <Route path="lab-imaging" element={<DoctorLabImaging />} />
+          <Route path="follow-ups" element={<FollowUpDashboard />} />
+          <Route path="medical-records" element={<MedicalRecordsDashboard />} />
+          <Route path="tasks" element={<TasksDashboard />} />
+          <Route path="communication" element={<CommunicationDashboard />} />
+          <Route path="reports" element={<ReportsDashboard />} />
+          <Route path="settings" element={<ProfileSettingsDashboard />} />
+          
+          {/* Future sections (uncomment as you build components) */}
+          {/* <Route path="patients" element={<MyPatients />} />
+          <Route path="prescriptions" element={<Prescriptions />} />
+          <Route path="consultations" element={<Consultations />} />
+          <Route path="notifications" element={<DoctorNotifications />} /> */}
+        </Route>
 
         {/* Patient Role */}
         <Route
@@ -177,7 +216,8 @@ function App() {
               <PatientDashboard />
             </ProtectedRoute>
           }
-        />
+        >
+        </Route>
       </Routes>
     </Router>
   );
