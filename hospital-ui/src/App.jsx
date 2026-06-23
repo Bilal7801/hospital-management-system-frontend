@@ -74,6 +74,7 @@ import TasksDashboard from './pages/Doctor/sections/tasks-reminders/TasksDashboa
 import CommunicationDashboard from './pages/Doctor/sections/communication/CommunicationDashboard';
 import ReportsDashboard from './pages/Doctor/sections/reports/ReportsDashboard';
 import ProfileSettingsDashboard from './pages/Doctor/sections/settings/ProfileSettingsDashboard';
+import ActivateAccount from "./pages/Doctor/ActivateAccount";
 // Temporary placeholders uncommented as they get built out
 // import MyPatients from "./pages/Doctor/sections/MyPatients";
 // import Prescriptions from "./pages/Doctor/sections/Prescriptions";
@@ -101,6 +102,7 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/doctor/activate" element={<ActivateAccount />} />
 
         {/* SuperAdmin Nested Routes */}
         <Route
@@ -185,7 +187,7 @@ function App() {
           }
         >
           {/* Automatic Fallback Redirect to appointments component */}
-          <Route index element={<Navigate to="appointments" replace />} />
+          <Route index element={<Navigate to="overview" replace />} />
           
           {/* Active Appointments Operational Module */}
           <Route path="appointments" element={<DoctorAppointments />} />
@@ -200,6 +202,7 @@ function App() {
           <Route path="communication" element={<CommunicationDashboard />} />
           <Route path="reports" element={<ReportsDashboard />} />
           <Route path="settings" element={<ProfileSettingsDashboard />} />
+      
           
           {/* Future sections (uncomment as you build components) */}
           {/* <Route path="patients" element={<MyPatients />} />

@@ -11,17 +11,15 @@ const AddDoctor = () => {
 
   const [formData, setFormData] = useState({
     doctorName: "",
+    email: "",
     specialization: "",
     qualification: "",
     consultationFee: "",
-    timing: "",
     departmentId: "",
     isActive: true,
   });
 
-  // ======================
-  // FETCH DEPARTMENTS
-  // ======================
+  // Fetch Departments
   const fetchDepartments = async () => {
     try {
       const res = await api.get("/Department");
@@ -35,9 +33,7 @@ const AddDoctor = () => {
     fetchDepartments();
   }, []);
 
-  // ======================
-  // HANDLE INPUT
-  // ======================
+  // Handle Input Change
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -45,9 +41,7 @@ const AddDoctor = () => {
     }));
   };
 
-  // ======================
-  // STATUS
-  // ======================
+  // Toggle Status
   const toggleStatus = (status) => {
     setFormData((prev) => ({
       ...prev,
@@ -55,30 +49,31 @@ const AddDoctor = () => {
     }));
   };
 
-  // ======================
-  // SAVE DOCTOR
-  // ======================
+  // Submit Doctor
   const handleSubmit = async () => {
+    if (!formData.email) {
+      alert("Email is required");
+      return;
+    }
+
     try {
       setLoading(true);
 
       await api.post("/superadmin/doctors", {
         doctorName: formData.doctorName,
+        email: formData.email,
         specialization: formData.specialization,
         qualification: formData.qualification,
-        consultationFee: Number(formData.consultationFee),
-        timing: formData.timing,
-        departmentId: formData.departmentId
-          ? Number(formData.departmentId)
-          : null,
+        consultationFee: Number(formData.consultationFee) || 0,
+        departmentId: formData.departmentId ? Number(formData.departmentId) : null,
         isActive: formData.isActive,
       });
 
-      alert("Doctor added successfully");
+      alert("Doctor added successfully! Activation email sent.");
       navigate("/dashboard/doctors");
     } catch (error) {
       console.error("Add doctor failed:", error);
-      alert("Failed to add doctor");
+      alert(error.response?.data?.message || "Failed to add doctor");
     } finally {
       setLoading(false);
     }
@@ -86,142 +81,130 @@ const AddDoctor = () => {
 
   return (
     <div className="p-6 max-w-2xl mx-auto min-h-screen">
-
-      {/* Back */}
       <button
         onClick={() => navigate("/dashboard/doctors")}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer"
+        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer mb-6"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back
+        Back to Doctors
       </button>
 
-      {/* Card */}
-      <div className="mt-6 bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-6">Add Doctor</h2>
 
-        <h2 className="text-lg font-bold text-gray-900 mb-6">
-          Add New Doctor
-        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase">
+              Doctor Name
+            </label>
+            <input
+              name="doctorName"
+              value={formData.doctorName}
+              onChange={handleChange}
+              placeholder="Enter doctor name"
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
 
-        {/* Doctor Name */}
-        <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Doctor Name
-          </label>
-          <input
-            name="doctorName"
-            value={formData.doctorName}
-            onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-            placeholder="Enter doctor name"
-          />
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase">
+              Email Address
+            </label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="doctor@example.com"
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase">
+              Specialization
+            </label>
+            <input
+              name="specialization"
+              value={formData.specialization}
+              onChange={handleChange}
+              placeholder="e.g. Cardiology"
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase">
+              Qualification
+            </label>
+            <input
+              name="qualification"
+              value={formData.qualification}
+              onChange={handleChange}
+              placeholder="MBBS, FCPS"
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase">
+              Consultation Fee
+            </label>
+            <input
+              type="number"
+              name="consultationFee"
+              value={formData.consultationFee}
+              onChange={handleChange}
+              placeholder="2500"
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
+            />
+          </div>
+
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase">
+              Department
+            </label>
+            <select
+              name="departmentId"
+              value={formData.departmentId}
+              onChange={handleChange}
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
+            >
+              <option value="">Select Department</option>
+              {departments.map((dept) => (
+                <option key={dept.departmentId} value={dept.departmentId}>
+                  {dept.departmentName}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
-        {/* Specialization */}
-        <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Specialization
-          </label>
-          <input
-            name="specialization"
-            value={formData.specialization}
-            onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-            placeholder="e.g Cardiology"
-          />
-        </div>
-
-        {/* Qualification */}
-        <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Qualification
-          </label>
-          <input
-            name="qualification"
-            value={formData.qualification}
-            onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-            placeholder="MBBS, FCPS"
-          />
-        </div>
-
-        {/* Fee */}
-        <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Consultation Fee
-          </label>
-          <input
-            type="number"
-            name="consultationFee"
-            value={formData.consultationFee}
-            onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-            placeholder="2500"
-          />
-        </div>
-
-        {/* Timing */}
-        <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Timing
-          </label>
-          <input
-            name="timing"
-            value={formData.timing}
-            onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-            placeholder="9 AM - 2 PM"
-          />
-        </div>
-
-        {/* Department */}
-        <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Department
-          </label>
-          <select
-            name="departmentId"
-            value={formData.departmentId}
-            onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-          >
-            <option value="">Select Department</option>
-
-            {departments.map((dept) => (
-              <option
-                key={dept.departmentId}
-                value={dept.departmentId}
-              >
-                {dept.departmentName}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Status */}
-        <div className="mb-6">
+        <div className="mt-6">
           <label className="text-[11px] font-semibold text-gray-500 uppercase">
             Status
           </label>
-
           <div className="flex gap-3 mt-2">
             <button
+              type="button"
               onClick={() => toggleStatus(true)}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border cursor-pointer ${
+              className={`flex-1 py-3 text-sm font-semibold rounded-xl border ${
                 formData.isActive
-                  ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                  : "bg-white hover:bg-gray-50"
+                  ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                  : "bg-white border-gray-300"
               }`}
             >
               Active
             </button>
 
             <button
+              type="button"
               onClick={() => toggleStatus(false)}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border cursor-pointer ${
+              className={`flex-1 py-3 text-sm font-semibold rounded-xl border ${
                 !formData.isActive
                   ? "bg-gray-100 text-gray-600 border-gray-300"
-                  : "bg-white hover:bg-gray-50"
+                  : "bg-white border-gray-300"
               }`}
             >
               Inactive
@@ -229,14 +212,13 @@ const AddDoctor = () => {
           </div>
         </div>
 
-        {/* Save */}
         <button
           onClick={handleSubmit}
           disabled={loading}
-          className="w-full bg-blue-600 text-white py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold hover:bg-blue-700 transition-all cursor-pointer disabled:opacity-50"
+          className="w-full mt-8 bg-blue-600 text-white py-3.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
-          {loading ? "Saving..." : "Save Doctor"}
+          {loading ? "Saving Doctor..." : "Save & Send Activation Email"}
         </button>
       </div>
     </div>

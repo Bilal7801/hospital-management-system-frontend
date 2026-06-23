@@ -7,7 +7,8 @@ const EditDoctor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [departments, setDepartments] = useState([]);
 
   const [formData, setFormData] = useState({
@@ -15,35 +16,35 @@ const EditDoctor = () => {
     specialization: "",
     qualification: "",
     consultationFee: "",
-    timing: "",
+    email: "",
     departmentId: "",
     isActive: true,
   });
 
-  // ======================
-  // FETCH DOCTOR
-  // ======================
+  // Fetch Doctor Details
   const fetchDoctor = async () => {
     try {
       const res = await api.get(`/superadmin/doctors/${id}`);
+      const data = res.data;
 
       setFormData({
-        doctorName: res.data.doctorName || "",
-        specialization: res.data.specialization || "",
-        qualification: res.data.qualification || "",
-        consultationFee: res.data.consultationFee || "",
-        timing: res.data.timing || "",
-        departmentId: res.data.departmentId || "",
-        isActive: res.data.isActive,
+        doctorName: data.doctorName || data.DoctorName || "",
+        specialization: data.specialization || data.Specialization || "",
+        qualification: data.qualification || data.Qualification || "",
+        consultationFee: data.consultationFee || data.ConsultationFee || "",
+        email: data.email || data.Email || "",
+        departmentId: data.departmentId || data.DepartmentId || "",
+        isActive: data.isActive !== undefined ? data.isActive : true,
       });
     } catch (error) {
       console.error("Error fetching doctor:", error);
+      alert("Failed to load doctor details");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ======================
-  // FETCH DEPARTMENTS
-  // ======================
+  // Fetch Departments
   const fetchDepartments = async () => {
     try {
       const res = await api.get("/Department");
@@ -58,9 +59,6 @@ const EditDoctor = () => {
     fetchDepartments();
   }, [id]);
 
-  // ======================
-  // HANDLE INPUT
-  // ======================
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -68,9 +66,6 @@ const EditDoctor = () => {
     }));
   };
 
-  // ======================
-  // STATUS TOGGLE
-  // ======================
   const toggleStatus = (status) => {
     setFormData((prev) => ({
       ...prev,
@@ -78,168 +73,134 @@ const EditDoctor = () => {
     }));
   };
 
-  // ======================
-  // UPDATE DOCTOR
-  // ======================
   const handleUpdate = async () => {
     try {
-      setLoading(true);
+      setSaving(true);
 
       await api.put(`/superadmin/doctors/${id}`, {
         doctorName: formData.doctorName,
         specialization: formData.specialization,
         qualification: formData.qualification,
-        consultationFee: Number(formData.consultationFee),
-        timing: formData.timing,
-        departmentId: formData.departmentId
-          ? Number(formData.departmentId)
-          : null,
+        consultationFee: Number(formData.consultationFee) || 0,
+        email: formData.email,
+        departmentId: formData.departmentId ? Number(formData.departmentId) : null,
         isActive: formData.isActive,
       });
 
-      alert("Doctor updated successfully");
+      alert("Doctor updated successfully!");
       navigate("/dashboard/doctors");
     } catch (error) {
       console.error("Update failed:", error);
-      alert("Failed to update doctor");
+      alert(error.response?.data?.message || "Failed to update doctor");
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
+  if (loading) {
+    return <div className="p-6 text-center">Loading doctor details...</div>;
+  }
+
   return (
     <div className="p-6 max-w-2xl mx-auto min-h-screen">
-
-      {/* Back */}
       <button
         onClick={() => navigate("/dashboard/doctors")}
-        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer"
+        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 cursor-pointer mb-6"
       >
         <ArrowLeft className="w-4 h-4" />
-        Back
+        Back to Doctors
       </button>
 
-      {/* Card */}
-      <div className="mt-6 bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm p-6">
+        <h2 className="text-xl font-bold text-gray-900 mb-6">Edit Doctor</h2>
 
-        <h2 className="text-lg font-bold text-gray-900 mb-6">
-          Edit Doctor #{id}
-        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase">Doctor Name</label>
+            <input
+              name="doctorName"
+              value={formData.doctorName}
+              onChange={handleChange}
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm"
+            />
+          </div>
 
-        {/* Doctor Name */}
-        <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Doctor Name
-          </label>
-          <input
-            name="doctorName"
-            value={formData.doctorName}
-            onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-          />
-        </div>
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase">Email Address</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm"
+            />
+          </div>
 
-        {/* Specialization */}
-        <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Specialization
-          </label>
-          <input
-            name="specialization"
-            value={formData.specialization}
-            onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-          />
-        </div>
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase">Specialization</label>
+            <input
+              name="specialization"
+              value={formData.specialization}
+              onChange={handleChange}
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm"
+            />
+          </div>
 
-        {/* Qualification */}
-        <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Qualification
-          </label>
-          <input
-            name="qualification"
-            value={formData.qualification}
-            onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-          />
-        </div>
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase">Qualification</label>
+            <input
+              name="qualification"
+              value={formData.qualification}
+              onChange={handleChange}
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm"
+            />
+          </div>
 
-        {/* Fee */}
-        <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Consultation Fee
-          </label>
-          <input
-            type="number"
-            name="consultationFee"
-            value={formData.consultationFee}
-            onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-          />
-        </div>
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase">Consultation Fee</label>
+            <input
+              type="number"
+              name="consultationFee"
+              value={formData.consultationFee}
+              onChange={handleChange}
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm"
+            />
+          </div>
 
-        {/* Timing */}
-        <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Timing
-          </label>
-          <input
-            name="timing"
-            value={formData.timing}
-            onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-          />
-        </div>
-
-        {/* Department */}
-        <div className="mb-4">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Department
-          </label>
-          <select
-            name="departmentId"
-            value={formData.departmentId}
-            onChange={handleChange}
-            className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-100"
-          >
-            <option value="">Select Department</option>
-
-            {departments.map((dept) => (
-              <option
-                key={dept.departmentId}
-                value={dept.departmentId}
-              >
-                {dept.departmentName}
-              </option>
-            ))}
-          </select>
+          <div>
+            <label className="text-[11px] font-semibold text-gray-500 uppercase">Department</label>
+            <select
+              name="departmentId"
+              value={formData.departmentId}
+              onChange={handleChange}
+              className="w-full mt-1 p-3 border border-gray-200 rounded-xl text-sm"
+            >
+              <option value="">Select Department</option>
+              {departments.map((dept) => (
+                <option key={dept.departmentId} value={dept.departmentId}>
+                  {dept.departmentName}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
 
         {/* Status */}
-        <div className="mb-6">
-          <label className="text-[11px] font-semibold text-gray-500 uppercase">
-            Status
-          </label>
-
+        <div className="mt-6">
+          <label className="text-[11px] font-semibold text-gray-500 uppercase">Status</label>
           <div className="flex gap-3 mt-2">
             <button
               onClick={() => toggleStatus(true)}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border cursor-pointer ${
-                formData.isActive
-                  ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                  : "bg-white hover:bg-gray-50"
+              className={`flex-1 py-3 text-sm font-semibold rounded-xl border ${
+                formData.isActive ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-white border-gray-300"
               }`}
             >
               Active
             </button>
-
             <button
               onClick={() => toggleStatus(false)}
-              className={`flex-1 py-2.5 text-sm font-semibold rounded-xl border cursor-pointer ${
-                !formData.isActive
-                  ? "bg-gray-100 text-gray-600 border-gray-300"
-                  : "bg-white hover:bg-gray-50"
+              className={`flex-1 py-3 text-sm font-semibold rounded-xl border ${
+                !formData.isActive ? "bg-gray-100 text-gray-600" : "bg-white border-gray-300"
               }`}
             >
               Inactive
@@ -247,14 +208,13 @@ const EditDoctor = () => {
           </div>
         </div>
 
-        {/* Save */}
         <button
           onClick={handleUpdate}
-          disabled={loading}
-          className="w-full bg-blue-600 text-white py-3 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold hover:bg-blue-700 transition-all cursor-pointer disabled:opacity-50"
+          disabled={saving}
+          className="w-full mt-8 bg-blue-600 text-white py-3.5 rounded-xl flex items-center justify-center gap-2 text-sm font-semibold hover:bg-blue-700 disabled:opacity-50"
         >
           <Save className="w-4 h-4" />
-          {loading ? "Saving..." : "Save Changes"}
+          {saving ? "Saving Changes..." : "Save Changes"}
         </button>
       </div>
     </div>
