@@ -167,7 +167,7 @@ const SearchAppointments = () => {
                     <td className="px-5 py-3.5 font-bold text-blue-600 tracking-wide">{apt.appointmentCode}</td>
                     <td className="px-5 py-3.5 font-bold text-gray-800">{apt.patientName}</td>
                     <td className="px-5 py-3.5 font-semibold text-gray-600">
-                      Dr. {apt.doctorName}
+                     {apt.doctorName}
                       <span className="text-[10px] text-gray-400 block">{apt.specialization}</span>
                     </td>
                     <td className="px-5 py-3.5 text-gray-500 font-medium">

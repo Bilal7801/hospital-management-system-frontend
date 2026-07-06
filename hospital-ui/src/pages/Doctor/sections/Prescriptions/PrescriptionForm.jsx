@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { Plus, Trash2, FileText, Pill, Clock, Eye } from 'lucide-react';
+import { Plus, Trash2, FileText, Pill, ArrowLeft, Eye } from 'lucide-react';
+import api from '../../../../api/axios';
 
-const PrescriptionForm = ({ patient, initialData, onSubmit }) => {
-  const [medicines, setMedicines] = useState(initialData.medicines);
-  const [notes, setNotes] = useState(initialData.notes);
+const PrescriptionForm = ({ patient, initialData, onSubmit, onBack }) => {
+  const [medicines, setMedicines] = useState(initialData.medicines || []);
+  const [notes, setNotes] = useState(initialData.notes || '');
 
   const addMedicineRow = () => {
     setMedicines([
@@ -27,17 +28,29 @@ const PrescriptionForm = ({ patient, initialData, onSubmit }) => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* Patient Strip Banner */}
+      {/* Patient Banner */}
       <div className="bg-gray-900 text-white px-6 py-4 rounded-xl flex flex-wrap justify-between items-center gap-4 shadow-sm">
-        <div className="text-sm font-medium">
-          Patient: <span className="text-blue-400 font-bold">{patient.name}</span> ({patient.gender}, {patient.age} Yrs)
+        <div className="flex items-center gap-3">
+          {onBack && (
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-700 bg-gray-800 px-3 py-2 text-sm font-medium text-gray-200 transition hover:bg-gray-700"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back</span>
+            </button>
+          )}
+          <div className="text-sm font-medium">
+            Patient: <span className="text-blue-400 font-bold">{patient.name}</span> ({patient.gender}, {patient.age} Yrs)
+          </div>
         </div>
         <div className="text-xs font-mono bg-gray-800 text-gray-300 px-3 py-1 rounded border border-gray-700">
           ID: {patient.id} • Date: {patient.date}
         </div>
       </div>
 
-      {/* Medicines Form Block */}
+      {/* Medicines */}
       <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
           <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
@@ -57,12 +70,7 @@ const PrescriptionForm = ({ patient, initialData, onSubmit }) => {
         <div className="p-6 space-y-4">
           {medicines.map((med, index) => (
             <div key={med.id} className="flex flex-col md:flex-row items-end gap-3 pb-4 border-b border-gray-50 last:border-0 last:pb-0">
-              <div className="w-6 text-xs font-bold text-gray-400 text-center self-center hidden md:block">
-                {index + 1}.
-              </div>
-
-              {/* Medicine Input Name */}
-              <div className="flex-1 w-full">
+              <div className="flex-1">
                 <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Brand / Generic Name</label>
                 <input
                   type="text"
@@ -74,7 +82,6 @@ const PrescriptionForm = ({ patient, initialData, onSubmit }) => {
                 />
               </div>
 
-              {/* Dosage Input mapping */}
               <div className="w-full md:w-32">
                 <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Dosage Pattern</label>
                 <input
@@ -87,7 +94,6 @@ const PrescriptionForm = ({ patient, initialData, onSubmit }) => {
                 />
               </div>
 
-              {/* Special Administration Instructions */}
               <div className="w-full md:w-48">
                 <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Timing / Instructions</label>
                 <select
@@ -104,7 +110,6 @@ const PrescriptionForm = ({ patient, initialData, onSubmit }) => {
                 </select>
               </div>
 
-              {/* Duration Timeline */}
               <div className="w-full md:w-32">
                 <label className="text-[11px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Duration</label>
                 <input
@@ -117,7 +122,6 @@ const PrescriptionForm = ({ patient, initialData, onSubmit }) => {
                 />
               </div>
 
-              {/* Delete Button Container */}
               {medicines.length > 1 && (
                 <button
                   type="button"
@@ -132,7 +136,7 @@ const PrescriptionForm = ({ patient, initialData, onSubmit }) => {
         </div>
       </div>
 
-      {/* Notes and Form Submission Controls */}
+      {/* Clinical Notes */}
       <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
         <div className="space-y-2">
           <label className="text-sm font-bold text-gray-900 flex items-center gap-2">
@@ -140,8 +144,8 @@ const PrescriptionForm = ({ patient, initialData, onSubmit }) => {
             <span>Clinical Advice / Dietary Notes</span>
           </label>
           <textarea
-            rows={3}
-            placeholder="Add relevant instructions, lifestyle recommendations, allergy safety warmings, or scheduling alerts here..."
+            rows={4}
+            placeholder="Add relevant instructions, lifestyle recommendations..."
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             className="w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"

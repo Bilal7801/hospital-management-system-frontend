@@ -10,18 +10,17 @@ const PrescriptionPreview = ({ patient, data, onEdit }) => {
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({
-        title: `Prescription_${patient.name}`,
-        text: `Clinical Chart Prescription Summary for ${patient.name}`,
+        title: `Prescription for ${patient.name}`,
+        text: `Clinical Prescription - ${patient.name}`,
         url: window.location.href,
       }).catch(console.error);
     } else {
-      alert("Sharing link copied to device buffer clip matrix framework successfully!");
+      alert("Prescription link copied to clipboard!");
     }
   };
 
   return (
     <div className="space-y-6">
-      {/* Interaction Controls Header Menu */}
       <div className="flex flex-wrap justify-between items-center gap-3 bg-white p-4 rounded-xl border border-gray-200 shadow-xs">
         <button
           onClick={onEdit}
@@ -32,103 +31,75 @@ const PrescriptionPreview = ({ patient, data, onEdit }) => {
         </button>
 
         <div className="flex items-center gap-2 ml-auto">
-          <button
-            onClick={onEdit}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 hover:bg-gray-50 text-xs font-semibold text-gray-700 rounded-lg transition-all"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-            <span>Modify Script</span>
+          <button onClick={onEdit} className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 hover:bg-gray-50 text-xs font-semibold text-gray-700 rounded-lg">
+            <Edit2 className="w-3.5 h-3.5" /> Modify Script
           </button>
-          <button
-            onClick={handleShare}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 hover:bg-gray-50 text-xs font-semibold text-gray-700 rounded-lg transition-all"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>Share Document</span>
+          <button onClick={handleShare} className="inline-flex items-center gap-1.5 px-3 py-1.5 border border-gray-200 hover:bg-gray-50 text-xs font-semibold text-gray-700 rounded-lg">
+            <Share2 className="w-3.5 h-3.5" /> Share Document
           </button>
-          <button
-            onClick={handlePrint}
-            className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg transition-all shadow-sm"
-          >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print Prescription</span>
+          <button onClick={handlePrint} className="inline-flex items-center gap-1.5 px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold rounded-lg">
+            <Printer className="w-3.5 h-3.5" /> Print Prescription
           </button>
         </div>
       </div>
 
-      {/* Printable Paper Canvas Workspace block */}
-      <div id="printable-prescription-canvas" className="bg-white border border-gray-300 rounded-xl shadow-md max-w-3xl mx-auto p-8 sm:p-12 print:border-0 print:shadow-none print:p-0">
-        
-        {/* Prescription Paper Header Layout */}
-        <div className="flex justify-between items-start border-b-2 border-gray-900 pb-6">
+      <div id="printable-prescription" className="bg-white border-2 border-gray-300 rounded-xl shadow-md max-w-3xl mx-auto p-8 print:shadow-none print:border-gray-400">
+        <div className="flex justify-between items-start border-b-2 border-gray-900 pb-6 mb-6">
           <div>
-            <h2 className="text-xl font-bold text-gray-900 tracking-tight">METRO CARE CLINICS INC.</h2>
-            <p className="text-xs text-gray-500 mt-0.5 font-medium">Internal Medicine & Endocrinology Centre</p>
-            <p className="text-[11px] text-gray-400 mt-2">Contact: support@metrocareclinic.com | +91 22 5554 0199</p>
+            <h2 className="text-2xl font-bold text-gray-900">METRO CARE CLINICS</h2>
+            <p className="text-sm text-gray-500">Internal Medicine & Endocrinology</p>
           </div>
           <div className="text-right">
-            <h4 className="text-sm font-bold text-gray-900">Dr. Vikram Rathore, MD</h4>
-            <p className="text-xs text-blue-600 font-medium">Reg No: BMC-992314-A</p>
+            <div className="font-bold text-lg">Dr. Bilal</div>
+            <div className="text-xs text-blue-600">Cardiology Specialist</div>
           </div>
         </div>
 
-        {/* Patient Parameters Meta Row Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 bg-gray-50/70 rounded-lg p-4 border border-gray-100 my-6 text-xs">
-          <div><span className="text-gray-400 block uppercase font-bold text-[9px] tracking-wider">Patient Name</span><strong className="text-gray-800 text-sm">{patient.name}</strong></div>
-          <div><span className="text-gray-400 block uppercase font-bold text-[9px] tracking-wider">Age / Gender</span><span className="text-gray-700 font-medium">{patient.age} Yrs / {patient.gender}</span></div>
-          <div><span className="text-gray-400 block uppercase font-bold text-[9px] tracking-wider">Record Identifier</span><span className="text-gray-700 font-mono">{patient.id}</span></div>
-          <div><span className="text-gray-400 block uppercase font-bold text-[9px] tracking-wider">Date issued</span><span className="text-gray-700 font-medium">{patient.date}</span></div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50 p-4 rounded-lg mb-8 text-sm">
+          <div><span className="text-xs text-gray-500 block">Patient Name</span><strong>{patient.name}</strong></div>
+          <div><span className="text-xs text-gray-500 block">Age / Gender</span><span>{patient.age} Yrs / {patient.gender}</span></div>
+          <div><span className="text-xs text-gray-500 block">Record ID</span><span className="font-mono">{patient.id}</span></div>
+          <div><span className="text-xs text-gray-500 block">Date</span><span>{patient.date}</span></div>
         </div>
 
-        {/* The Rx Symbol Frame Context */}
-        <div className="text-3xl font-serif font-bold text-gray-900 mb-4 select-none italic">
-          R<span className="text-xl font-sans font-normal -ml-1 text-gray-600">x</span>
-        </div>
+        <div className="text-4xl font-serif font-bold text-gray-900 mb-6">R<span className="text-2xl -ml-1 text-gray-500">x</span></div>
 
-        {/* Active Medicine Table Grid */}
-        <div className="min-h-[220px]">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="border-b border-gray-300 text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-                <th className="py-2 w-10">#</th>
-                <th className="py-2">Medication Formulation details</th>
-                <th className="py-2 text-center w-28">Dosage Pattern</th>
-                <th className="py-2 w-40">Administration</th>
-                <th className="py-2 text-right w-24">Duration</th>
+        <table className="w-full border-collapse mb-8">
+          <thead>
+            <tr className="border-b-2 border-gray-800 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+              <th className="py-3 w-8">#</th>
+              <th className="py-3">Medication</th>
+              <th className="py-3 text-center">Dosage</th>
+              <th className="py-3">Instructions</th>
+              <th className="py-3 text-right">Duration</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100 text-sm">
+            {data.medicines.map((med, index) => (
+              <tr key={med.id || index}>
+                <td className="py-4 font-medium text-gray-400">{index + 1}</td>
+                <td className="py-4 font-semibold text-gray-900">{med.name}</td>
+                <td className="py-4 text-center font-mono text-blue-700">{med.dosage}</td>
+                <td className="py-4 text-gray-600">{med.instructions}</td>
+                <td className="py-4 text-right font-medium">{med.duration}</td>
               </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100 text-sm">
-              {data.medicines.map((med, index) => (
-                <tr key={med.id}>
-                  <td className="py-4 font-bold text-gray-400">{index + 1}</td>
-                  <td className="py-4 font-bold text-gray-900">{med.name || 'Unspecified Medicine Compound'}</td>
-                  <td className="py-4 font-mono text-center text-blue-700 font-bold bg-blue-50/40 rounded-sm">{med.dosage}</td>
-                  <td className="py-4 text-gray-600 pl-4">{med.instructions}</td>
-                  <td className="py-4 text-right font-medium text-gray-800">{med.duration}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
 
-        {/* Notes Advisory Section */}
         {data.notes && (
-          <div className="mt-8 border-t border-gray-200 pt-4">
-            <h5 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Clinical Advice & Notes</h5>
-            <p className="text-xs text-gray-600 leading-relaxed bg-amber-50/40 border border-amber-100/60 p-3 rounded-lg">
-              {data.notes}
-            </p>
+          <div className="bg-amber-50 border border-amber-100 p-5 rounded-lg mb-8">
+            <h5 className="text-xs font-bold text-amber-700 uppercase mb-2">Clinical Advice</h5>
+            <p className="text-sm text-gray-700 leading-relaxed">{data.notes}</p>
           </div>
         )}
 
-        {/* Signature Area layout block */}
-        <div className="mt-16 flex justify-end">
-          <div className="text-center w-48 border-t border-gray-400 pt-2">
-            <div className="font-bold text-sm text-gray-900">Dr. Vikram Rathore</div>
-            <div className="text-[10px] text-gray-400 uppercase font-medium tracking-wider mt-0.5">Authorized Signature</div>
+        <div className="mt-12 flex justify-end">
+          <div className="text-center border-t border-gray-400 pt-2 w-56">
+            <div className="font-bold text-gray-900">Dr. Bilal</div>
+            <div className="text-xs text-gray-400">Authorized Signature</div>
           </div>
         </div>
-
       </div>
     </div>
   );

@@ -1,29 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ConsultationQueue from './ConsultationQueue';
 import ConsultationForm from './ConsultationForm';
+import api from '../../../../api/axios';
+import { Loader2 } from 'lucide-react';
 
 const DoctorConsultations = () => {
+  const [queue, setQueue] = useState([]);
   const [activeConsultation, setActiveConsultation] = useState(null);
-  
-  // Simulated Real-time Waiting Line Queue
-  const [queue, setQueue] = useState([
-    { id: "Apt-101", patientId: "P-1043", name: "Arjun Mehta", age: 42, gender: "Male", timeSlot: "09:00 AM", status: "Waiting", reason: "Chronic Diabetes Checkup" },
-    { id: "Apt-102", patientId: "P-2089", name: "Sana Khan", age: 29, gender: "Female", timeSlot: "10:30 AM", status: "Waiting", reason: "Asthma Exacerbation Follow-up" },
-    { id: "Apt-103", patientId: "P-3112", name: "Rahul Verma", age: 35, gender: "Male", timeSlot: "11:45 AM", status: "Waiting", reason: "Severe Migraine Aura" }
-  ]);
+  const [loading, setLoading] = useState(true);
 
-  const handleStartConsultation = (patient) => {
-    // Transition patient to active "In Progress" status room
-    setQueue(prev => prev.map(p => p.id === patient.id ? { ...p, status: 'In Progress' } : p));
-    setActiveConsultation(patient);
+  // Fetch Today's Queue
+  const fetchQueue = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/doctor/consultations/queue');
+      setQueue(res.data.data || []);
+    } catch (error) {
+      console.error("Failed to load queue", error);
+      setQueue([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleCompleteConsultation = (appointmentId, caseData) => {
-    console.log("Saving clinical record encapsulation to server database...", caseData);
-    
-    // Remove or drop patient out of active waiting room queue list upon completion sign-off
-    setQueue(prev => prev.filter(p => p.id !== appointmentId));
-    setActiveConsultation(null);
+  useEffect(() => {
+    fetchQueue();
+  }, []);
+
+  const handleStartConsultation = async (patient) => {
+    try {
+      await api.post(`/doctor/consultations/${patient.id}/start`);
+      setActiveConsultation(patient);
+      fetchQueue(); // Refresh queue
+    } catch (error) {
+      console.error("Failed to start consultation", error);
+      alert("Failed to start consultation");
+    }
+  };
+
+  const handleCompleteConsultation = async (appointmentId, caseData) => {
+    try {
+      await api.post(`/doctor/consultations/${appointmentId}/complete`, caseData);
+      setActiveConsultation(null);
+      fetchQueue(); // Refresh queue
+    } catch (error) {
+      console.error("Failed to complete consultation", error);
+      alert("Failed to save consultation");
+    }
   };
 
   return (
@@ -37,6 +60,7 @@ const DoctorConsultations = () => {
           
           <ConsultationQueue 
             queue={queue} 
+            loading={loading}
             onStart={handleStartConsultation} 
           />
         </>

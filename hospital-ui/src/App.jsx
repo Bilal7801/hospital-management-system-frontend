@@ -60,7 +60,7 @@ import NotificationsHub from "./pages/Receptionist/sections/notifications/Notifi
 import ProfileAndPreferences from "./pages/Receptionist/sections/profile/ProfileAndPreferences";
 import UpdatePatient from "./pages/Receptionist/sections/patient-management/UpdatePatient";
 
-// Doctor Core Layout Components
+// Doctor Components
 import DoctorDashboard from "./pages/Doctor/DoctorDashboard";
 import DoctorAppointments from "./pages/Doctor/sections/Appointment/DoctorAppointments";
 import DoctorPatients from "./pages/Doctor/sections/Patients/DoctorPatients";
@@ -75,21 +75,28 @@ import CommunicationDashboard from './pages/Doctor/sections/communication/Commun
 import ReportsDashboard from './pages/Doctor/sections/reports/ReportsDashboard';
 import ProfileSettingsDashboard from './pages/Doctor/sections/settings/ProfileSettingsDashboard';
 import ActivateAccount from "./pages/Doctor/ActivateAccount";
-// Temporary placeholders uncommented as they get built out
-// import MyPatients from "./pages/Doctor/sections/MyPatients";
-// import Prescriptions from "./pages/Doctor/sections/Prescriptions";
-// import Consultations from "./pages/Doctor/sections/Consultations";
-// import DoctorNotifications from "./pages/Doctor/sections/DoctorNotifications";
 
-// Patient Dashboard Component
+// Patient Dashboard
 import PatientDashboard from "./pages/Patient/PatientDashboard";
 
+// ====================== FIXED PROTECTED ROUTE ======================
 const ProtectedRoute = ({ children, allowedRole }) => {
   const token = localStorage.getItem("token");
   const userRole = localStorage.getItem("role");
 
-  if (!token) return <Navigate to="/" replace />;
-  if (allowedRole && userRole !== allowedRole) return <Navigate to="/" replace />;
+  if (!token) {
+    return <Navigate to="/" replace />;
+  }
+
+  if (allowedRole) {
+    const normalizedUserRole = userRole?.trim().toLowerCase();
+    const normalizedAllowedRole = allowedRole.trim().toLowerCase();
+
+    if (normalizedUserRole !== normalizedAllowedRole) {
+      console.warn(`🔴 Role mismatch - Expected: ${allowedRole}, Got: ${userRole}`);
+      return <Navigate to="/" replace />;
+    }
+  }
 
   return children;
 };
@@ -102,9 +109,9 @@ function App() {
         <Route path="/" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/doctor/activate" element={<ActivateAccount />} />
+        <Route path="/doctor/activate" element={<ActivateAccount />} />
 
-        {/* SuperAdmin Nested Routes */}
+        {/* SuperAdmin Routes */}
         <Route
           path="/dashboard"
           element={
@@ -146,14 +153,14 @@ function App() {
           <Route path="billing/payments" element={<Payments />} />
           <Route path="billing/payments/:id" element={<ViewPayment />} />
           <Route path="billing/revenue" element={<RevenueReports />} />
-          <Route path="billing/methods" border element={<PaymentMethods />} />
+          <Route path="billing/methods" element={<PaymentMethods />} />
           <Route path="billing/transactions" element={<Transactions />} />
           <Route path="reports" element={<ReportsAnalytics />} />
           <Route path="notices" element={<NoticeAndAnnouncements />} />
           <Route path="profile" element={<Profile />} />
         </Route>
 
-        {/* Receptionist Nested Routes */}
+        {/* Receptionist Routes */}
         <Route
           path="/receptionist"
           element={
@@ -177,7 +184,7 @@ function App() {
           <Route path="patient/edit/:patientId" element={<UpdatePatient />} />
         </Route>
 
-        {/* Doctor Nested Route Architecture */}
+        {/* Doctor Routes */}
         <Route
           path="/doctor"
           element={
@@ -186,10 +193,7 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* Automatic Fallback Redirect to appointments component */}
-          <Route index element={<Navigate to="overview" replace />} />
-          
-          {/* Active Appointments Operational Module */}
+          <Route index element={<Navigate to="appointments" replace />} />
           <Route path="appointments" element={<DoctorAppointments />} />
           <Route path="overview" element={<DoctorOverview />} />
           <Route path="patients" element={<DoctorPatients />} />
@@ -202,16 +206,9 @@ function App() {
           <Route path="communication" element={<CommunicationDashboard />} />
           <Route path="reports" element={<ReportsDashboard />} />
           <Route path="settings" element={<ProfileSettingsDashboard />} />
-      
-          
-          {/* Future sections (uncomment as you build components) */}
-          {/* <Route path="patients" element={<MyPatients />} />
-          <Route path="prescriptions" element={<Prescriptions />} />
-          <Route path="consultations" element={<Consultations />} />
-          <Route path="notifications" element={<DoctorNotifications />} /> */}
         </Route>
 
-        {/* Patient Role */}
+        {/* Patient Routes */}
         <Route
           path="/patient"
           element={
@@ -219,8 +216,7 @@ function App() {
               <PatientDashboard />
             </ProtectedRoute>
           }
-        >
-        </Route>
+        />
       </Routes>
     </Router>
   );

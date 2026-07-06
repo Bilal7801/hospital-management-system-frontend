@@ -9,15 +9,13 @@ const DoctorPatients = () => {
   const [selectedPatient, setSelectedPatient] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(false);
-  const [detailLoading, setDetailLoading] = useState(false); // UI state for single record load
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const fetchPatients = async (search = "") => {
     try {
       setLoading(true);
       const res = await api.get("/doctor/patients", {
-        params: {
-          searchTerm: search
-        }
+        params: { searchTerm: search }
       });
       setPatients(res.data.data || []);
     } catch (error) {
@@ -35,6 +33,8 @@ const DoctorPatients = () => {
 
       if (res.data.success) {
         setSelectedPatient(res.data.data);
+      } else {
+        console.error("API returned success=false", res.data);
       }
     } catch (error) {
       console.error("Failed to load patient details", error);
@@ -43,6 +43,7 @@ const DoctorPatients = () => {
     }
   };
 
+  // Search with debounce
   useEffect(() => {
     const timeout = setTimeout(() => {
       fetchPatients(searchQuery);
@@ -51,13 +52,14 @@ const DoctorPatients = () => {
     return () => clearTimeout(timeout);
   }, [searchQuery]);
 
+  // Initial load
   useEffect(() => {
     fetchPatients();
   }, []);
 
   return (
     <div className="space-y-6 relative">
-      {/* Dynamic Processing Overlay */}
+      {/* Loading Overlay for Detail View */}
       {detailLoading && (
         <div className="fixed inset-0 bg-gray-900/10 backdrop-blur-sm z-50 flex items-center justify-center">
           <div className="bg-white px-5 py-3 rounded-xl shadow-lg border flex items-center gap-2 font-medium text-sm text-gray-700">
@@ -86,7 +88,7 @@ const DoctorPatients = () => {
             loading={loading}
             searchQuery={searchQuery}
             setSearchQuery={setSearchQuery}
-            onSelectPatient={(patientId) => fetchPatientDetails(patientId)} // 🚀 FIXED: Receives ID directly now
+            onSelectPatient={fetchPatientDetails}   // ← Fixed: Pass function directly
           />
         </>
       ) : (

@@ -1,18 +1,22 @@
 import React from 'react';
-import { User, Play, Clock } from 'lucide-react';
+import { User, Play, Clock, Loader2 } from 'lucide-react';
 
-const ConsultationQueue = ({ queue, onStart }) => {
+const ConsultationQueue = ({ queue, loading, onStart }) => {
   return (
     <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
       <div className="p-5 border-b border-gray-100 bg-gray-50/50">
         <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wider">Today's Active Patient Intake Queue</h3>
       </div>
 
-      {queue.length === 0 ? (
+      {loading ? (
+        <div className="p-20 flex justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      ) : queue.length === 0 ? (
         <div className="p-16 text-center text-gray-500">
           <User className="w-12 h-12 text-gray-300 mx-auto mb-3" />
           <p className="font-medium text-gray-600">Queue completely clear</p>
-          <p className="text-xs text-gray-400 mt-1">No active intake profiles are marked waiting inside the triage workspace.</p>
+          <p className="text-xs text-gray-400 mt-1">No active intake profiles are marked waiting.</p>
         </div>
       ) : (
         <div className="overflow-x-auto">
