@@ -1,53 +1,59 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import LabImagingOrders from './LabImagingOrders';
 import LabImagingResults from './LabImagingResults';
-import { PlusCircle, Database } from 'lucide-react';
+import { PlusCircle, Database, Loader2 } from 'lucide-react';
+import api from '../../../../api/axios';
 
 const DoctorLabImaging = () => {
-  const [activeTab, setActiveTab] = useState('results'); // 'results' or 'order'
-  
-  const [activePatient] = useState({
-    id: "P-1043",
-    name: "Arjun Mehta",
-    age: 42,
-    gender: "Male"
-  });
+  const [activeTab, setActiveTab] = useState('results');
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock Longitudinal Diagnostic Registry Databases 
-  const [diagnosticHistory, setDiagnosticHistory] = useState([
-    { id: "REP-9082", type: "Lab Test", name: "Comprehensive Metabolic Panel (CMP)", date: "June 10, 2026", status: "Completed", facility: "Central Core Labs", results: "Fasting Glucose: 112 mg/dL (High), HbA1c: 6.4% (Pre-diabetic Range), Serum Creatinine: 0.9 mg/dL (Normal)." },
-    { id: "REP-7721", type: "Imaging", name: "Chest X-Ray PA View", date: "May 12, 2026", status: "Completed", facility: "Metro Radiographics", results: "Lung fields are completely clear bilaterally. No focal consolidations, effusions, or pneumothorax noted. Cardiac silhouette size is within normal limits." },
-    { id: "REP-4310", type: "Lab Test", name: "Lipid Profile Panel", date: "Jan 15, 2026", status: "Completed", facility: "Central Core Labs", results: "Total Cholesterol: 210 mg/dL (Borderline High), Triglycerides: 165 mg/dL (High), HDL: 42 mg/dL, LDL: 135 mg/dL." },
-    { id: "REP-1109", type: "Imaging", name: "Ultrasound Whole Abdomen", date: "Jan 14, 2026", status: "Pending", facility: "Metro Radiographics", results: "Specimen/Scan captured. Awaiting official radiologist signature sign-off validation logs." }
-  ]);
+  const fetchOrders = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get('/doctor/lab-imaging/my-orders');
+      setOrders(res.data.data || []);
+    } catch (err) {
+      console.error("Failed to load orders", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const handleCreateOrder = (newOrder) => {
-    const formattedOrder = {
-      id: `REP-${Math.floor(1000 + Math.random() * 9000)}`,
-      type: newOrder.category === 'lab' ? 'Lab Test' : 'Imaging',
-      name: newOrder.testName,
-      date: "Today",
-      status: "Pending",
-      facility: newOrder.facility,
-      results: "Order submitted to queue. Awaiting clinical sample processing workflows."
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+ const handleCreateOrder = async (newOrder) => {
+  try {
+    const payload = {
+      patientId: 8, // ← Replace with actual selected patient ID
+      testName: newOrder.testName,
+      notes: newOrder.clinicalNotes,
+      category: newOrder.category
     };
 
-    setDiagnosticHistory([formattedOrder, ...diagnosticHistory]);
+    console.log("Sending:", payload);
+
+    const res = await api.post('/doctor/lab-imaging/order', payload);
+    alert("Order placed successfully!");
+    fetchOrders();
     setActiveTab('results');
-  };
+  } catch (err) {
+    console.error(err.response?.data || err);
+    alert("Failed: " + (err.response?.data?.message || "Unknown error"));
+  }
+};
 
   return (
     <div className="space-y-6">
-      {/* Module Title Section */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Diagnostics & Imaging Lab Portal</h1>
-          <p className="text-gray-500 text-sm mt-1">
-            Patient: <span className="text-gray-900 font-semibold">{activePatient.name}</span> ({activePatient.id})
-          </p>
+          <p className="text-gray-500 text-sm mt-1">Manage lab tests and imaging orders</p>
         </div>
 
-        {/* Tab Switching Control Group */}
         <div className="inline-flex p-1 bg-gray-100 rounded-xl border self-start sm:self-center">
           <button
             onClick={() => setActiveTab('results')}
@@ -56,7 +62,7 @@ const DoctorLabImaging = () => {
             }`}
           >
             <Database className="w-3.5 h-3.5" />
-            <span>View Results Hub</span>
+            <span>View Results</span>
           </button>
           <button
             onClick={() => setActiveTab('order')}
@@ -65,14 +71,17 @@ const DoctorLabImaging = () => {
             }`}
           >
             <PlusCircle className="w-3.5 h-3.5" />
-            <span>Order Test / Scan</span>
+            <span>New Order</span>
           </button>
         </div>
       </div>
 
-      {/* Primary Dynamic Panel Wrapper Layout */}
-      {activeTab === 'results' ? (
-        <LabImagingResults records={diagnosticHistory} />
+      {loading ? (
+        <div className="flex justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+        </div>
+      ) : activeTab === 'results' ? (
+        <LabImagingResults records={orders} onRefresh={fetchOrders} />
       ) : (
         <LabImagingOrders onSubmit={handleCreateOrder} onCancel={() => setActiveTab('results')} />
       )}
