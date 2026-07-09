@@ -1,9 +1,50 @@
-import React, { useState } from 'react';
-import { Calendar, Pill, Clock, Search } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Calendar, Pill, Clock, Search, Loader2 } from 'lucide-react';
+import api from '../../../../api/axios';
 
-const RemindersSection = ({ appointments, medications }) => {
+const RemindersSection = () => {
   const [subView, setSubView] = useState('ALL');
   const [filterQuery, setFilterQuery] = useState('');
+  const [appointments, setAppointments] = useState([]);
+  const [medications, setMedications] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch Reminders Data
+  useEffect(() => {
+    const fetchReminders = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get('/doctor/tasks'); // Reuse tasks endpoint
+        const data = res.data.data || [];
+
+        // Split into appointments and medications
+        setAppointments(data.filter(item => item.Type === 'Appointment' || item.Type === 'Followup'));
+        setMedications(data.filter(item => item.Type === 'Medication'));
+      } catch (err) {
+        console.error("Failed to load reminders", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchReminders();
+  }, []);
+
+  const filteredAppointments = appointments.filter(a =>
+    a.PatientName?.toLowerCase().includes(filterQuery.toLowerCase())
+  );
+
+  const filteredMedications = medications.filter(m =>
+    m.PatientName?.toLowerCase().includes(filterQuery.toLowerCase())
+  );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-20">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
@@ -41,18 +82,24 @@ const RemindersSection = ({ appointments, medications }) => {
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Calendar Consultations Pipeline</h3>
             <div className="space-y-2">
-              {appointments.filter(a => a.patientName.toLowerCase().includes(filterQuery.toLowerCase())).map(appt => (
-                <div key={appt.id} className="bg-white border border-gray-200 p-3.5 rounded-xl shadow-sm flex items-center justify-between gap-3 hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="p-2 bg-amber-50 text-amber-700 rounded-xl"><Calendar className="w-4 h-4" /></div>
-                    <div className="min-w-0">
-                      <h4 className="font-bold text-gray-900 text-xs truncate">{appt.patientName}</h4>
-                      <p className="text-[11px] text-gray-500 mt-0.5 font-medium">{appt.type}</p>
+              {filteredAppointments.length > 0 ? (
+                filteredAppointments.map(appt => (
+                  <div key={appt.Id} className="bg-white border border-gray-200 p-3.5 rounded-xl shadow-sm flex items-center justify-between gap-3 hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="p-2 bg-amber-50 text-amber-700 rounded-xl"><Calendar className="w-4 h-4" /></div>
+                      <div className="min-w-0">
+                        <h4 className="font-bold text-gray-900 text-xs truncate">{appt.PatientName}</h4>
+                        <p className="text-[11px] text-gray-500 mt-0.5 font-medium">{appt.Title}</p>
+                      </div>
                     </div>
+                    <span className="font-mono text-xs font-bold bg-slate-50 border px-2 py-1 rounded-lg text-gray-800">
+                      {new Date(appt.DueDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
                   </div>
-                  <span className="font-mono text-xs font-bold bg-slate-50 border px-2 py-1 rounded-lg text-gray-800">{appt.time}</span>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-400 text-xs">No upcoming appointments</div>
+              )}
             </div>
           </div>
         )}
@@ -62,20 +109,24 @@ const RemindersSection = ({ appointments, medications }) => {
           <div className="space-y-3">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider px-1">Therapeutic Regime Watchdogs</h3>
             <div className="space-y-2">
-              {medications.filter(m => m.patientName.toLowerCase().includes(filterQuery.toLowerCase())).map(med => (
-                <div key={med.id} className="bg-white border border-gray-200 p-3.5 rounded-xl shadow-sm flex flex-col gap-2 hover:shadow-md transition-shadow">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-50 text-emerald-700 rounded-xl"><Pill className="w-4 h-4" /></div>
-                    <div>
-                      <h4 className="font-bold text-gray-900 text-xs">{med.patientName}</h4>
-                      <p className="text-[11px] text-gray-600 font-medium">Titration Monitor: <span className="font-bold text-emerald-700">{med.medication}</span></p>
+              {filteredMedications.length > 0 ? (
+                filteredMedications.map(med => (
+                  <div key={med.Id} className="bg-white border border-gray-200 p-3.5 rounded-xl shadow-sm flex flex-col gap-2 hover:shadow-md transition-shadow">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-50 text-emerald-700 rounded-xl"><Pill className="w-4 h-4" /></div>
+                      <div>
+                        <h4 className="font-bold text-gray-900 text-xs">{med.PatientName}</h4>
+                        <p className="text-[11px] text-gray-600 font-medium">Titration Monitor: <span className="font-bold text-emerald-700">{med.Title}</span></p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-1 text-[10px] text-gray-400 font-mono border-t pt-1.5 mt-0.5">
+                      <Clock className="w-3.5 h-3.5" /> Trigger Metric: {new Date(med.DueDate).toLocaleDateString()}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 text-[10px] text-gray-400 font-mono border-t pt-1.5 mt-0.5">
-                    <Clock className="w-3.5 h-3.5" /> Trigger Metric: {med.schedule}
-                  </div>
-                </div>
-              ))}
+                ))
+              ) : (
+                <div className="text-center py-8 text-gray-400 text-xs">No medication reminders</div>
+              )}
             </div>
           </div>
         )}

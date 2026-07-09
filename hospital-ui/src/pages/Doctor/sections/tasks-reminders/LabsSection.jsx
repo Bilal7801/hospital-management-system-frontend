@@ -1,19 +1,39 @@
-import React, { useState } from 'react';
-import { Search, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Search } from 'lucide-react';
 
-const LabsSection = ({ labs, onViewDetails }) => {
+const LabsSection = ({ initialLabs, onViewDetails }) => {
+  const [labs, setLabs] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('ALL');
 
+  useEffect(() => {
+    // Process the data passed directly from the dashboard parent component
+    const mappedLabs = initialLabs.map(item => ({
+      id: item.id,
+      patientName: item.patientName || 'Unknown Patient',
+      patientId: item.patientId || 'N/A',
+      testType: item.title || 'Diagnostic Review',
+      orderedDate: item.dueDate ? new Date(item.dueDate).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric', 
+        year: 'numeric' 
+      }) : 'N/A',
+      status: item.status || "Pending"
+    }));
+    setLabs(mappedLabs);
+  }, [initialLabs]);
+
   const filteredLabs = labs.filter(lab => {
-    const matchesSearch = lab.patientName.toLowerCase().includes(searchTerm.toLowerCase()) || lab.patientId.includes(searchTerm);
-    const matchesStatus = statusFilter === 'ALL' || lab.status === statusFilter;
+    const matchesSearch = 
+      (lab.patientName || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (lab.patientId || '').toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesStatus = statusFilter === 'ALL' || lab.status.toLowerCase() === statusFilter.toLowerCase();
     return matchesSearch && matchesStatus;
   });
 
   return (
     <div className="space-y-4">
-      {/* Search and Control Filters Header */}
       <div className="bg-white p-4 border border-gray-200 rounded-xl shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
         <div className="relative w-full md:max-w-xs">
           <Search className="absolute left-2.5 top-2.5 text-gray-400 w-4 h-4" />
@@ -26,7 +46,7 @@ const LabsSection = ({ labs, onViewDetails }) => {
           />
         </div>
         <div className="flex gap-2 w-full md:w-auto justify-end">
-          {['ALL', 'Urgent Review', 'In Lab Analysis'].map(status => (
+          {['ALL', 'Pending', 'Urgent Review', 'In Lab Analysis'].map(status => (
             <button
               key={status}
               onClick={() => setStatusFilter(status)}
@@ -40,7 +60,6 @@ const LabsSection = ({ labs, onViewDetails }) => {
         </div>
       </div>
 
-      {/* Enterprise Scale Data Table Grid */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs text-gray-600 border-collapse">
@@ -50,14 +69,13 @@ const LabsSection = ({ labs, onViewDetails }) => {
                 <th className="p-3">Diagnostic Request</th>
                 <th className="p-3">Ordered Timestamp</th>
                 <th className="p-3">Status Scope</th>
-                <th className="p-3 text-right pr-4">Pipeline</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {filteredLabs.map((lab) => (
                 <tr 
                   key={lab.id} 
-                  onClick={() => onViewDetails(lab.id)} // Entire row clickable for large target usability
+                  onClick={() => onViewDetails(lab.id)}
                   className="hover:bg-slate-50/60 transition-colors cursor-pointer group"
                 >
                   <td className="p-3 pl-4">
@@ -68,41 +86,22 @@ const LabsSection = ({ labs, onViewDetails }) => {
                   <td className="p-3 text-gray-500">{lab.orderedDate}</td>
                   <td className="p-3">
                     <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded font-bold uppercase tracking-wide text-[10px] ${
-                      lab.status === 'Urgent Review' ? 'bg-rose-50 text-rose-700 border border-rose-100 animate-pulse' : 'bg-amber-50 text-amber-700 border border-amber-100'
+                      lab.status.toLowerCase() === 'urgent review' ? 'bg-rose-50 text-rose-700 border border-rose-100 animate-pulse' : 'bg-amber-50 text-amber-700 border border-amber-100'
                     }`}>
                       {lab.status}
                     </span>
-                  </td>
-                  <td className="p-3 text-right pr-4">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation(); // Prevents double click executions
-                        onViewDetails(lab.id);
-                      }}
-                      className="p-1.5 text-gray-500 hover:text-white border rounded-md hover:bg-blue-600 transition-all shadow-sm"
-                      title="Open Comprehensive Diagnostic Panel"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                    </button>
                   </td>
                 </tr>
               ))}
               {filteredLabs.length === 0 && (
                 <tr>
-                  <td colSpan="5" className="text-center py-8 text-gray-400 italic">No lab entries found matches standard query scope.</td>
+                  <td colSpan="4" className="text-center py-8 text-gray-400 italic">
+                    No entries found matching filters.
+                  </td>
                 </tr>
               )}
             </tbody>
           </table>
-        </div>
-
-        {/* Scaled Footer Pagination Engine */}
-        <div className="bg-gray-50 border-t p-3 flex items-center justify-between text-xs text-gray-500 font-medium">
-          <span>Showing 1 to {filteredLabs.length} of {filteredLabs.length} entries</span>
-          <div className="flex gap-1">
-            <button className="p-1 border rounded bg-white hover:bg-gray-50 text-gray-400 cursor-not-allowed"><ChevronLeft className="w-4 h-4" /></button>
-            <button className="p-1 border rounded bg-white hover:bg-gray-50 text-gray-400 cursor-not-allowed"><ChevronRight className="w-4 h-4" /></button>
-          </div>
         </div>
       </div>
     </div>

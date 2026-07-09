@@ -2,18 +2,24 @@ import React from 'react';
 import { ArrowLeft, Printer, FileText, CheckCircle, ShieldAlert, FlaskConical } from 'lucide-react';
 
 const LabResultDetail = ({ labData, onBack }) => {
-  if (!labData) return null;
+  if (!labData) {
+    return (
+      <div className="py-20 text-center text-gray-500">
+        Lab result not found.
+        <button onClick={onBack} className="mt-4 text-blue-600 underline block mx-auto">Go Back</button>
+      </div>
+    );
+  }
 
-  // Mock comprehensive lab telemetry payload
-  const mockPanels = [
-    { parameter: "Fasting Plasma Glucose", value: "134 mg/dL", range: "70-99 mg/dL", status: "HIGH" },
-    { parameter: "HbA1c (Glycated Hemoglobin)", value: "6.4 %", range: "4.0-5.6 %", status: "HIGH" },
-    { parameter: "Estimated Average Glucose (eAG)", value: "137 mg/dL", range: "70-126 mg/dL", status: "HIGH" }
+  // Dynamic panels from backend (preferred)
+  const panels = labData.panels || [
+    // Fallback if backend doesn't send panels yet
+    { parameter: labData.testType || "Lab Test", value: "Pending", range: "N/A", status: labData.status || "PENDING" }
   ];
 
   return (
     <div className="space-y-6 animate-fadeIn">
-      {/* Header Context Controller */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-4 border border-gray-200 rounded-xl shadow-sm print:hidden">
         <div className="flex items-center gap-3">
           <button 
@@ -35,7 +41,7 @@ const LabResultDetail = ({ labData, onBack }) => {
         </button>
       </div>
 
-      {/* Patient Meta Summary Block */}
+      {/* Patient Meta Summary */}
       <div className="bg-white rounded-xl border border-gray-200 p-5 grid grid-cols-1 md:grid-cols-4 gap-4 text-xs shadow-sm">
         <div>
           <span className="text-gray-400 block font-medium">Patient Name</span>
@@ -58,7 +64,7 @@ const LabResultDetail = ({ labData, onBack }) => {
         </div>
       </div>
 
-      {/* Lab Telemetry Biometric Panel Matrix Table */}
+      {/* Dynamic Lab Telemetry Panel Matrix Table */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div className="p-4 bg-gray-50 border-b">
           <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
@@ -75,13 +81,14 @@ const LabResultDetail = ({ labData, onBack }) => {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100 font-medium">
-            {mockPanels.map((panel, idx) => (
+            {panels.map((panel, idx) => (
               <tr key={idx} className="hover:bg-slate-50/50">
                 <td className="p-3 pl-4 font-semibold text-gray-900">{panel.parameter}</td>
                 <td className="p-3 font-mono text-gray-800 font-bold">{panel.value}</td>
-                <td className="p-3 text-gray-400 font-mono">{panel.range}</td>
+                <td className="p-3 text-gray-400 font-mono">{panel.range || 'N/A'}</td>
                 <td className="p-3 text-right pr-4">
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-bold text-[9px] bg-rose-50 text-rose-700 border border-rose-100">
+                  <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded font-bold text-[9px] 
+                    ${panel.status === 'HIGH' || panel.status === 'ABNORMAL' ? 'bg-rose-50 text-rose-700 border border-rose-100' : 'bg-emerald-50 text-emerald-700 border border-emerald-100'}`}>
                     <ShieldAlert className="w-3 h-3" /> {panel.status}
                   </span>
                 </td>
@@ -91,7 +98,7 @@ const LabResultDetail = ({ labData, onBack }) => {
         </table>
       </div>
 
-      {/* Validation Interactive Action Controls Section */}
+      {/* Action Controls */}
       <div className="bg-slate-50 border border-gray-200 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 print:hidden">
         <div className="flex items-start gap-2 text-xs text-gray-500">
           <FileText className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
@@ -108,4 +115,4 @@ const LabResultDetail = ({ labData, onBack }) => {
   );
 };
 
-export default LabResultDetail;
+export default LabResultDetail; 
