@@ -1,8 +1,64 @@
-import React, { useState } from 'react';
-import { Lock, FileSignature, AlertTriangle, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Lock, FileSignature, AlertTriangle, ShieldCheck, Loader2, Trash2 } from 'lucide-react';
+import api from '../../../../api/axios';
 
 const InternalNotesSection = () => {
   const [internalLog, setInternalLog] = useState('');
+  const [remarks, setRemarks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  // Fetch existing internal remarks
+  useEffect(() => {
+    const fetchRemarks = async () => {
+      try {
+        setLoading(true);
+        const res = await api.get('/receptionist/communication/remarks');
+        setRemarks(res.data.data || []);
+      } catch (err) {
+        console.error("Failed to load internal remarks", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRemarks();
+  }, []);
+
+  const handleSaveNote = async () => {
+    if (!internalLog.trim()) return;
+
+    setSaving(true);
+
+    try {
+      const res = await api.post('/receptionist/communication/remark', {
+        message: internalLog,
+        scope: "Clinical"
+      });
+
+      // Add to list immediately
+      setRemarks([res.data.data, ...remarks]);
+      setInternalLog('');
+      alert('Internal clinical note saved successfully.');
+    } catch (err) {
+      console.error("Failed to save note", err);
+      alert('Failed to save note. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteRemark = async (id) => {
+    if (!window.confirm("Delete this internal note?")) return;
+
+    try {
+      await api.delete(`/receptionist/communication/remark/${id}`);
+      setRemarks(remarks.filter(r => r.id !== id));
+    } catch (err) {
+      console.error("Failed to delete", err);
+      alert("Failed to delete note.");
+    }
+  };
 
   return (
     <div className="space-y-6 max-w-4xl animate-fadeIn">
@@ -40,24 +96,53 @@ const InternalNotesSection = () => {
               <span>Sign-off: Active Session Authenticated</span>
             </div>
             <button
-              onClick={() => { alert('Committed internal clinical note signature package.'); setInternalLog(''); }}
-              disabled={!internalLog.trim()}
+              onClick={handleSaveNote}
+              disabled={saving || !internalLog.trim()}
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-lg shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <FileSignature className="w-3.5 h-3.5" /> <span>Save Clinical Thread</span>
+              {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileSignature className="w-3.5 h-3.5" />}
+              {saving ? 'Saving...' : 'Save Clinical Thread'}
             </button>
           </div>
         </div>
 
-        {/* Informative Guardrails */}
-        <div className="bg-amber-50/40 border border-amber-200 rounded-xl p-4 text-xs space-y-3">
-          <div className="flex items-center gap-1 text-amber-800 font-bold">
-            <AlertTriangle className="w-4 h-4" />
-            <h4 className="uppercase tracking-wider text-[10px]">Legal Hold Protocols</h4>
+        {/* Informative Guardrails + Live List */}
+        <div className="space-y-4">
+          <div className="bg-amber-50/40 border border-amber-200 rounded-xl p-4 text-xs space-y-3">
+            <div className="flex items-center gap-1 text-amber-800 font-bold">
+              <AlertTriangle className="w-4 h-4" />
+              <h4 className="uppercase tracking-wider text-[10px]">Legal Hold Protocols</h4>
+            </div>
+            <p className="text-gray-600 font-medium leading-relaxed">
+              While excluded from standard client summaries, internal records remain discoverable under legal subpoena frameworks. Keep narratives object-oriented and free from subjective conjecture.
+            </p>
           </div>
-          <p className="text-gray-600 font-medium leading-relaxed">
-            While excluded from standard client summaries, internal records remain discoverable under legal subpoena frameworks. Keep narratives object-oriented and free from subjective conjecture.
-          </p>
+
+          {/* Live Remarks List */}
+          <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm">
+            <h4 className="text-xs font-bold text-gray-700 mb-3">Recent Internal Notes</h4>
+            {remarks.length > 0 ? (
+              <div className="space-y-3 max-h-64 overflow-y-auto">
+                {remarks.map((remark) => (
+                  <div key={remark.id} className="p-3 bg-gray-50 rounded-lg text-xs border border-gray-100 group">
+                    <div className="flex justify-between">
+                      <span className="font-medium text-gray-700">{remark.author}</span>
+                      <button 
+                        onClick={() => deleteRemark(remark.id)}
+                        className="text-gray-400 hover:text-rose-600 opacity-0 group-hover:opacity-100 transition-all"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                    <p className="text-gray-600 mt-1 leading-relaxed">{remark.message}</p>
+                    <p className="text-[10px] text-gray-400 mt-1.5">{new Date(remark.createdAt).toLocaleString()}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-gray-400 text-xs italic py-4">No internal notes yet.</p>
+            )}
+          </div>
         </div>
       </div>
     </div>

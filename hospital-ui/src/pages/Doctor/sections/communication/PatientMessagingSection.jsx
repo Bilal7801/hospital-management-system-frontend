@@ -1,22 +1,58 @@
-import React, { useState } from 'react';
-import { Send, ShieldCheck, ToggleLeft, ToggleRight, MessageSquare, Mail, Phone } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Send, ShieldCheck, Loader2, Mail, Phone, MessageSquare } from 'lucide-react';
+import api from '../../../../api/axios';
 
 const PatientMessagingSection = () => {
   const [isGatewayEnabled, setIsGatewayEnabled] = useState(true);
-  const [selectedChannel, setSelectedChannel] = useState('portal');
+  const [selectedChannel, setSelectedChannel] = useState('email');
   const [message, setMessage] = useState('');
+  const [patientId, setPatientId] = useState('');
+  const [recipient, setRecipient] = useState('');
+  const [sending, setSending] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  const handleSendMessage = (e) => {
+  const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!message.trim() || !isGatewayEnabled) return;
-    
-    alert(`Message dispatched via ${selectedChannel.toUpperCase()}: ${message}`);
-    setMessage('');
+    if (!message.trim() || !recipient.trim() || !isGatewayEnabled) {
+      alert("Please fill Message and Recipient fields");
+      return;
+    }
+
+    setSending(true);
+    setSuccess(false);
+
+    try {
+      const payload = {
+        patientId: patientId ? parseInt(patientId) : null,
+        type: selectedChannel,
+        recipient: recipient.trim(),
+        message: message.trim(),
+        template: "general"
+      };
+
+      console.log("📤 Sending payload:", payload); // Debug
+
+      const res = await api.post('/doctor/communication/send', payload);
+
+      console.log("✅ Response:", res.data);
+
+      setSuccess(true);
+      alert(`Message sent successfully via ${selectedChannel.toUpperCase()}!`);
+      setMessage('');
+      // Optionally clear recipient too
+      // setRecipient('');
+    } catch (err) {
+      console.error("❌ Failed to send message", err.response?.data || err);
+      const errorMsg = err.response?.data?.message || 'Failed to send message. Please try again.';
+      alert(errorMsg);
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
     <div className="space-y-6 max-w-4xl animate-fadeIn">
-      {/* Gateway Control Banner */}
+      {/* Gateway Control Banner - Unchanged */}
       <div className={`p-4 rounded-xl border transition-all flex flex-col sm:flex-row items-center justify-between gap-4 ${
         isGatewayEnabled ? 'bg-emerald-50/40 border-emerald-100' : 'bg-rose-50/40 border-rose-100'
       }`}>
@@ -38,23 +74,21 @@ const PatientMessagingSection = () => {
           className="flex items-center gap-1.5 text-xs font-bold text-gray-600 border bg-white p-1.5 px-3 rounded-lg shadow-sm hover:bg-gray-50 transition-all"
         >
           {isGatewayEnabled ? (
-            <><span>Disable Portal Link</span><ToggleRight className="w-5 h-5 text-emerald-600" /></>
+            <><span>Disable Portal Link</span><ShieldCheck className="w-5 h-5 text-emerald-600" /></>
           ) : (
-            <><span>Enable Portal Link</span><ToggleLeft className="w-5 h-5 text-gray-400" /></>
+            <><span>Enable Portal Link</span><ShieldCheck className="w-5 h-5 text-gray-400" /></>
           )}
         </button>
       </div>
 
-      {/* Main Composition Grid */}
+      {/* Main Composition Grid - Unchanged UI */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         <form onSubmit={handleSendMessage} className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm md:col-span-2 space-y-4">
           <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Target Channel Matrix</label>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 gap-2">
               {[
-                { id: 'portal', label: 'Patient Portal', icon: MessageSquare },
-                { id: 'email', label: 'Verified Email', icon: Mail },
-                { id: 'sms', label: 'Direct SMS', icon: Phone }
+                { id: 'email', label: 'Verified Email', icon: Mail }
               ].map(item => (
                 <button
                   key={item.id}
@@ -75,6 +109,17 @@ const PatientMessagingSection = () => {
           </div>
 
           <div className="space-y-1">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Patient ID or Email</label>
+            <input
+              type="text"
+              placeholder="Patient ID or Email Address"
+              value={recipient}
+              onChange={(e) => setRecipient(e.target.value)}
+              className="w-full px-3 py-2 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+            />
+          </div>
+
+          <div className="space-y-1">
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Message Payload Content</label>
             <textarea
               rows={5}
@@ -89,15 +134,20 @@ const PatientMessagingSection = () => {
           <div className="flex justify-end pt-2 border-t">
             <button
               type="submit"
-              disabled={!message.trim() || !isGatewayEnabled}
+              disabled={!message.trim() || !recipient.trim() || !isGatewayEnabled || sending}
               className="inline-flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-lg shadow-sm transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Send className="w-3.5 h-3.5" /> <span>Dispatch Broadcast</span>
+              {sending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
+              {sending ? 'Sending...' : 'Dispatch Broadcast'}
             </button>
           </div>
         </form>
 
-        {/* Audit Side Note Checklist */}
+        {/* Audit Side Note Checklist - Unchanged */}
         <div className="bg-slate-50 border border-gray-200 rounded-xl p-4 text-xs space-y-3">
           <h4 className="font-bold text-gray-700 uppercase tracking-wider text-[10px]">Transmission Safe Protocols</h4>
           <ul className="space-y-2 text-gray-500 font-medium list-disc pl-4 leading-relaxed">

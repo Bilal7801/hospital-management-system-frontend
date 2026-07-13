@@ -1,30 +1,73 @@
 import React, { useState } from 'react';
-import { FileHeart, Printer, Share2, ClipboardList, CheckCircle } from 'lucide-react';
+import { FileHeart, Printer, Share2, ClipboardList, Loader2, Mail } from 'lucide-react';
+import api from '../../../../api/axios';
 
 const ConsultationSummarySection = () => {
   const [summaryData, setSummaryData] = useState({
     diagnosis: '',
     instructions: '',
-    nextReview: ''
+    nextReview: '',
+    patientEmail: ''   // ← New Email Field
   });
+  const [saving, setSaving] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  const handlePushSummary = (e) => {
+  const handlePushSummary = async (e) => {
     e.preventDefault();
-    alert('Consultation outline summary synchronized to patient portal cloud network pipeline.');
-    setSummaryData({ diagnosis: '', instructions: '', nextReview: '' });
+    if (!summaryData.diagnosis.trim() || !summaryData.instructions.trim() || !summaryData.patientEmail.trim()) {
+      alert("Please fill Diagnosis, Instructions and Patient Email");
+      return;
+    }
+
+    setSaving(true);
+    setSuccess(false);
+
+    try {
+      await api.post('/receptionist/communication/summary', {
+        diagnosis: summaryData.diagnosis.trim(),
+        instructions: summaryData.instructions.trim(),
+        nextReview: summaryData.nextReview.trim(),
+        patientEmail: summaryData.patientEmail.trim()
+      });
+
+      setSuccess(true);
+      alert('Consultation summary saved and email sent to patient successfully!');
+
+      // Clear form
+      setSummaryData({ diagnosis: '', instructions: '', nextReview: '', patientEmail: '' });
+    } catch (err) {
+      console.error("Failed to save summary", err);
+      alert(err.response?.data?.message || 'Failed to save summary. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
     <div className="space-y-6 max-w-4xl animate-fadeIn">
       <div className="bg-white border border-gray-200 rounded-xl p-4 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-6 items-start">
         
-        {/* Active Input Composition Editor Panel Block Form */}
+        {/* Form */}
         <form onSubmit={handlePushSummary} className="space-y-4 md:col-span-2">
           <div className="border-b pb-2 flex items-center justify-between">
             <h3 className="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
               <ClipboardList className="w-4 h-4 text-sky-600" /> Draft Patient-Facing Summary
             </h3>
             <span className="text-[10px] text-gray-400 font-medium">Translates technical metrics to clear guidance</span>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Patient Email <span className="text-red-500">*</span></label>
+            <div className="relative">
+              <Mail className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
+              <input 
+                type="email"
+                placeholder="patient@example.com"
+                value={summaryData.patientEmail}
+                onChange={(e) => setSummaryData({ ...summaryData, patientEmail: e.target.value })}
+                className="w-full pl-10 px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-600"
+              />
+            </div>
           </div>
 
           <div className="space-y-1">
@@ -42,7 +85,7 @@ const ConsultationSummarySection = () => {
             <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Home-Care Plan & Lifestyle Adjustments</label>
             <textarea 
               rows={4}
-              placeholder="Provide clean instructions (e.g. Limit daily salt intake below 2g, track morning blood pressure values)..."
+              placeholder="Provide clean instructions..."
               value={summaryData.instructions}
               onChange={(e) => setSummaryData({ ...summaryData, instructions: e.target.value })}
               className="w-full px-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-sky-600 resize-none leading-relaxed"
@@ -70,15 +113,20 @@ const ConsultationSummarySection = () => {
             </button>
             <button 
               type="submit"
-              disabled={!summaryData.diagnosis.trim() || !summaryData.instructions.trim()}
+              disabled={saving || !summaryData.diagnosis.trim() || !summaryData.instructions.trim() || !summaryData.patientEmail.trim()}
               className="px-4 py-1.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold rounded-lg shadow-sm transition-all flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Share2 className="w-3.5 h-3.5" /> Sync & Send to Patient
+              {saving ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : (
+                <Share2 className="w-3.5 h-3.5" />
+              )}
+              {saving ? 'Sending Email...' : 'Sync & Send to Patient'}
             </button>
           </div>
         </form>
 
-        {/* Live Clean Slate Sheet Preview Panel Container Card */}
+        {/* Preview */}
         <div className="border border-sky-100 bg-sky-50/20 rounded-xl p-4 space-y-4 self-stretch flex flex-col">
           <h4 className="text-[10px] font-bold text-sky-800 uppercase tracking-wider flex items-center gap-1">
             <FileHeart className="w-3.5 h-3.5" /> Portal Summary Preview Layout
