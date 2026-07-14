@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { MessageSquare, UserSquare2, Lock, ClipboardList, Loader2 } from 'lucide-react';
+import { MessageSquare, UserSquare2, ClipboardList } from 'lucide-react';
 import api from '../../../../api/axios';
 
 import PatientMessagingSection from './PatientMessagingSection';
 import ReceptionistNotesSection from './ReceptionistNotesSection';
-import InternalNotesSection from './InternalNotesSection';
 import ConsultationSummarySection from './ConsultationSummarySection';
 
 const CommunicationDashboard = () => {
@@ -39,10 +38,10 @@ const CommunicationDashboard = () => {
     fetchStats();
   }, []);
 
+  // Set exactly 3 active channels
   const tabs = [
     { id: 'messaging', label: 'Patient Messaging', icon: MessageSquare },
     { id: 'receptionist', label: 'Receptionist Notes', icon: UserSquare2 },
-    // { id: 'internal', label: 'Internal Case Notes', icon: Lock },
     { id: 'summary', label: 'Consultation Summary', icon: ClipboardList },
   ];
 
@@ -70,8 +69,8 @@ const CommunicationDashboard = () => {
         )}
       </div>
 
-      {/* Main Multi-channel Grid Selection Switcher Row Layout */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 border border-gray-200 bg-white rounded-xl p-1.5 shadow-sm">
+      {/* Main 3-Section Grid Switcher Layout */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 border border-gray-200 bg-white rounded-xl p-1.5 shadow-sm">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -96,7 +95,6 @@ const CommunicationDashboard = () => {
       <div className="bg-transparent mt-4">
         {activeTab === 'messaging' && <PatientMessagingSection />}
         {activeTab === 'receptionist' && <ReceptionistNotesSection />}
-        {/* {activeTab === 'internal' && <InternalNotesSection />} */}
         {activeTab === 'summary' && <ConsultationSummarySection />}
       </div>
     </div>
