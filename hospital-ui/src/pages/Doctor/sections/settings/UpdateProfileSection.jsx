@@ -12,8 +12,6 @@ const UpdateProfileSection = () => {
     phone: '',
     profileImageUrl: '',
     role: '',
-    designation: 'Senior Consultant & Web Systems Director',
-    biography: 'Specialized in internal medicine workflows and clinical information framework optimizations.',
   });
 
   const [avatarFile, setAvatarFile] = useState(null);
@@ -231,32 +229,7 @@ const UpdateProfileSection = () => {
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-              Professional Designation
-            </label>
-            <div className="relative">
-              <Briefcase className="absolute left-3 top-2.5 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={profileData.designation}
-                onChange={(e) => setProfileData({ ...profileData, designation: e.target.value })}
-                className="w-full pl-9 pr-3 py-2 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:outline-none font-semibold text-gray-800"
-              />
-            </div>
-          </div>
-
-          <div className="sm:col-span-2 space-y-1.5">
-            <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
-              Clinical Practitioner Profile Abstract
-            </label>
-            <textarea
-              rows="3"
-              value={profileData.biography}
-              onChange={(e) => setProfileData({ ...profileData, biography: e.target.value })}
-              className="w-full p-3 text-xs border border-gray-200 rounded-lg focus:ring-1 focus:ring-blue-500 focus:outline-none font-medium text-gray-700 leading-relaxed"
-            />
-          </div>
+          
         </div>
       </div>
 
