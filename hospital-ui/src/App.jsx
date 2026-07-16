@@ -79,6 +79,64 @@ import ActivateAccount from "./pages/Doctor/ActivateAccount";
 // Patient Dashboard
 import PatientDashboard from "./pages/Patient/PatientDashboard";
 
+import PatientOverview from "./pages/Patient/sections/PatientOverview";
+import MedicalRecords from "./pages/Patient/sections/MedicalRecords";
+import LabResults from "./pages/Patient/sections/LabResults";
+import TeleConsult from "./pages/Patient/sections/TeleConsult";
+
+// Patient Profile Nested Subsections
+import ProfileLayout from "./pages/Patient/sections/Profile/ProfileLayout";
+import PersonalInfo from "./pages/Patient/sections/Profile/PersonalInfo";
+import EmergencyContacts from "./pages/Patient/sections/Profile/EmergencyContacts";
+import AllergiesConditions from "./pages/Patient/sections/Profile/AllergiesConditions";
+import HealthSummary from "./pages/Patient/sections/Profile/HealthSummary";
+
+// Patient Appointments Section Modules
+import AppointmentsLayout from "./pages/Patient/sections/Appointments/AppointmentsLayout";
+import BookAppointment from "./pages/Patient/sections/Appointments/BookAppointment";
+import SearchDoctor from "./pages/Patient/sections/Appointments/SearchDoctor";
+import DoctorAvailability from "./pages/Patient/sections/Appointments/DoctorAvailability";
+import UpcomingAppointments from "./pages/Patient/sections/Appointments/UpcomingAppointments";
+import PastAppointments from "./pages/Patient/sections/Appointments/PastAppointments";
+import RescheduleAppointment from "./pages/Patient/sections/Appointments/RescheduleAppointment";
+import CancelAppointment from "./pages/Patient/sections/Appointments/CancelAppointment";
+
+// Patient Visits & Consultations Section Modules
+import VisitsLayout from "./pages/Patient/sections/Visits/VisitsLayout";
+import ViewVisitHistory from "./pages/Patient/sections/Visits/ViewVisitHistory";
+import ConsultationSummary from "./pages/Patient/sections/Visits/ConsultationSummary";
+import ChiefComplaints from "./pages/Patient/sections/Visits/ChiefComplaints";
+import Diagnosis from "./pages/Patient/sections/Visits/Diagnosis";
+import TreatmentPlan from "./pages/Patient/sections/Visits/TreatmentPlan";
+
+// Patient Prescriptions Section Modules
+import PrescriptionsLayout from "./pages/Patient/sections/Prescriptions/PrescriptionsLayout";
+import ViewPrescriptions from "./pages/Patient/sections/Prescriptions/ViewPrescriptions";
+import MedicationInstructions from "./pages/Patient/sections/Prescriptions/MedicationInstructions";
+import DosageDuration from "./pages/Patient/sections/Prescriptions/DosageDuration";
+import DownloadPrintPrescription from "./pages/Patient/sections/Prescriptions/DownloadPrintPrescription";
+
+// Patient Lab & Imaging Reports Section Modules
+import LabsLayout from "./pages/Patient/sections/Labs/LabsLayout";
+import ViewLabResults from "./pages/Patient/sections/Labs/ViewLabResults";
+import ViewImagingResults from "./pages/Patient/sections/Labs/ViewImagingResults";
+import DownloadShareReports from "./pages/Patient/sections/Labs/DownloadShareReports";
+import TrackPendingTests from "./pages/Patient/sections/Labs/TrackPendingTests";
+
+// Patient Payments & Invoices Section Modules
+import PaymentsLayout from "./pages/Patient/sections/Payments/PaymentsLayout";
+import ViewInvoices from "./pages/Patient/sections/Payments/ViewInvoices";
+import MakePaymentOnline from "./pages/Patient/sections/Payments/MakePaymentOnline";
+import PaymentHistory from "./pages/Patient/sections/Payments/PaymentHistory";
+import DownloadReceipts from "./pages/Patient/sections/Payments/DownloadReceipts";
+
+// Patient Communication Section Modules
+import CommunicationLayout from "./pages/Patient/sections/Communication/CommunicationLayout";
+import SendMessageToDoctor from "./pages/Patient/sections/Communication/SendMessageToDoctor";
+import Notifications from "./pages/Patient/sections/Communication/Notifications";
+import Announcements from "./pages/Patient/sections/Communication/Announcements";
+import HospitalContact from "./pages/Patient/sections/Communication/HospitalContact";
+
 // ====================== FIXED PROTECTED ROUTE ======================
 const ProtectedRoute = ({ children, allowedRole }) => {
   const token = localStorage.getItem("token");
@@ -208,7 +266,7 @@ function App() {
           <Route path="settings" element={<ProfileSettingsDashboard />} />
         </Route>
 
-        {/* Patient Routes */}
+{/* Patient Routes */}
         <Route
           path="/patient"
           element={
@@ -216,7 +274,81 @@ function App() {
               <PatientDashboard />
             </ProtectedRoute>
           }
-        />
+        >
+          {/* Main Layout Pages */}
+          <Route index element={<Navigate to="overview" replace />} />
+          <Route path="overview" element={<PatientOverview />} />
+          
+          {/* Nested Appointments Portal */}
+          <Route path="appointments" element={<AppointmentsLayout />}>
+            <Route index element={<Navigate to="book" replace />} />
+            <Route path="book" element={<BookAppointment />} />
+            <Route path="search" element={<SearchDoctor />} />
+            <Route path="availability" element={<DoctorAvailability />} />
+            <Route path="upcoming" element={<UpcomingAppointments />} />
+            <Route path="past" element={<PastAppointments />} />
+            <Route path="reschedule" element={<RescheduleAppointment />} />
+            <Route path="cancel" element={<CancelAppointment />} />
+          </Route>
+
+          {/* Nested Visits & Consultations Portal */}
+          <Route path="visits" element={<VisitsLayout />}>
+            <Route index element={<Navigate to="history" replace />} />
+            <Route path="history" element={<ViewVisitHistory />} />
+            <Route path="summary" element={<ConsultationSummary />} />
+            <Route path="complaints" element={<ChiefComplaints />} />
+            <Route path="diagnosis" element={<Diagnosis />} />
+            <Route path="treatment" element={<TreatmentPlan />} />
+          </Route>
+
+          {/* Nested Prescriptions Portal */}
+          <Route path="prescriptions" element={<PrescriptionsLayout />}>
+            <Route index element={<Navigate to="view" replace />} />
+            <Route path="view" element={<ViewPrescriptions />} />
+            <Route path="instructions" element={<MedicationInstructions />} />
+            <Route path="dosage" element={<DosageDuration />} />
+            <Route path="print" element={<DownloadPrintPrescription />} />
+          </Route>
+
+          {/* Nested Lab & Imaging Reports Portal */}
+          <Route path="labs" element={<LabsLayout />}>
+            <Route index element={<Navigate to="results" replace />} />
+            <Route path="results" element={<ViewLabResults />} />
+            <Route path="imaging" element={<ViewImagingResults />} />
+            <Route path="export" element={<DownloadShareReports />} />
+            <Route path="pending" element={<TrackPendingTests />} />
+          </Route>
+
+          {/* Nested Payments & Invoices Portal */}
+          <Route path="payments" element={<PaymentsLayout />}>
+            <Route index element={<Navigate to="invoices" replace />} />
+            <Route path="invoices" element={<ViewInvoices />} />
+            <Route path="pay" element={<MakePaymentOnline />} />
+            <Route path="history" element={<PaymentHistory />} />
+            <Route path="receipts" element={<DownloadReceipts />} />
+          </Route>
+
+          {/* Nested Communication Portal */}
+          <Route path="communication" element={<CommunicationLayout />}>
+            <Route index element={<Navigate to="chat" replace />} />
+            <Route path="chat" element={<SendMessageToDoctor />} />
+            <Route path="notifications" element={<Notifications />} />
+            <Route path="announcements" element={<Announcements />} />
+            <Route path="contact" element={<HospitalContact />} />
+          </Route>
+
+          <Route path="records" element={<MedicalRecords />} />
+          <Route path="tele-consult" element={<TeleConsult />} />
+
+          {/* Nested Profile Subtree */}
+          <Route path="profile" element={<ProfileLayout />}>
+            <Route index element={<Navigate to="personal-info" replace />} />
+            <Route path="personal-info" element={<PersonalInfo />} />
+            <Route path="emergency-contacts" element={<EmergencyContacts />} />
+            <Route path="allergies" element={<AllergiesConditions />} />
+            <Route path="summary" element={<HealthSummary />} />
+          </Route>
+        </Route>
       </Routes>
     </Router>
   );
